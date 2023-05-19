@@ -2,6 +2,8 @@ package club.maxstats.kolour.gui
 
 import club.maxstats.kolour.util.Color
 
+class GuiScreen: GuiBuilder()
+class GuiComponent: GuiBuilder()
 sealed class GuiBuilder {
     val children = arrayListOf<GuiBuilder>()
     val attributes = hashMapOf<String, String>()
@@ -11,6 +13,8 @@ sealed class GuiBuilder {
         children.add(component)
         return component
     }
+    fun component(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
+
     fun onRender(action: () -> Unit) {
 
     }
@@ -72,17 +76,11 @@ sealed class GuiBuilder {
         attributes["margin_bottom"] = marginBottom
     }
 }
-class GuiScreen: GuiBuilder()
-class GuiComponent: GuiBuilder()
+
 fun gui(init: GuiScreen.() -> Unit): GuiScreen {
     val gui = GuiScreen()
     gui.init()
     return gui
-}
-fun component(init: GuiComponent.() -> Unit): GuiComponent {
-    val component = GuiComponent()
-    component.init()
-    return component
 }
 
 fun example() {
