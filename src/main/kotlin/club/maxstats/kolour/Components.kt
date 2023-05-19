@@ -1,2 +1,0 @@
-package club.maxstats.kolour
-

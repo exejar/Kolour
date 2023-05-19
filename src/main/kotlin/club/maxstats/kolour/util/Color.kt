@@ -1,4 +1,4 @@
-package club.maxstats.kolour
+package club.maxstats.kolour.util
 
 data class Color(
     val red: Int = 0,

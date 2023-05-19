@@ -1,6 +1,6 @@
 package club.maxstats.kolour.render.shader
 
-import club.maxstats.kolour.Color
+import club.maxstats.kolour.util.Color
 import club.maxstats.kolour.util.asResource
 import club.maxstats.kolour.util.now
 import club.maxstats.kolour.util.readToString
