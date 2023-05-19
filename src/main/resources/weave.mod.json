@@ -1,0 +1,10 @@
+{
+  "mixinConfigs": [
+    "kolour.mixins.json"
+  ],
+  "entrypoints": [
+    "club.maxstats.kolour.Main"
+  ],
+  "hooks": [
+  ]
+}
