@@ -16,5 +16,6 @@ data class Color(
 
     companion object {
         val white = Color(255, 255, 255, 255)
+        val none = Color(0, 0, 0, 0)
     }
 }
