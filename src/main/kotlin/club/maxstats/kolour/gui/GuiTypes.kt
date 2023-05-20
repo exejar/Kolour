@@ -1,5 +1,36 @@
 package club.maxstats.kolour.gui
-
+enum class AlignDirection {
+    COLUMN,
+    ROW
+}
+enum class Alignment {
+    START,
+    MIDDLE,
+    END,
+    SPACE_BETWEEN,
+    SPACE_APART
+}
+enum class Position {
+    ABSOLUTE,
+    RELATIVE,
+    STATIC
+}
+data class Radius<T>(
+    var topLeft: T,
+    var topRight: T,
+    var bottomLeft: T,
+    var bottomRight: T
+) {
+    constructor(default: T) : this(default, default, default, default)
+}
+data class Sides<T>(
+    var left: T,
+    var top: T,
+    var right: T,
+    var bottom: T
+) {
+    constructor(default: T) : this(default, default, default, default)
+}
 sealed class MeasurementUnit(val value: Float)
 data class RemUnit(val rem: Float) : MeasurementUnit(rem) {
     /**
@@ -12,15 +43,15 @@ data class RemUnit(val rem: Float) : MeasurementUnit(rem) {
         return fontSize * rem
     }
 }
-data class PercentUnit(val percent: Float): MeasurementUnit(percent) {
+data class EmUnit(val em: Float): MeasurementUnit(em) {
     /**
-     * Converts the percentage value to pixels based on the specified full value.
+     * Converts the EM value to pixels based on the specified font size.
      *
-     * @param full The pixel amount to calculate the percentage of.
-     * @return The calculated pixel value based on the percentage.
+     * @param fontSize The font size in pixels.
+     * @return The calculated pixel value based on the EM value and font size.
      */
-    fun toPixels(full: Float): Float {
-        return full * (percent / 100)
+    fun toPixels(fontSize: Int): Float {
+        return fontSize * em
     }
 }
 data class ViewportWidthUnit(val vw: Float): MeasurementUnit(vw) {
@@ -49,8 +80,8 @@ data class PixelUnit(val pixel: Float): MeasurementUnit(pixel)
 
 val Number.rem: RemUnit
     get() = RemUnit(this.toFloat())
-val Number.percent: PercentUnit
-    get() = PercentUnit(this.toFloat())
+val Number.em: EmUnit
+    get() = EmUnit(this.toFloat())
 val Number.vw: ViewportWidthUnit
     get() = ViewportWidthUnit(this.toFloat())
 val Number.vh: ViewportHeightUnit
