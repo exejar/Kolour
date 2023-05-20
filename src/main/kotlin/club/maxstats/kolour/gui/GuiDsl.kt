@@ -99,7 +99,7 @@ sealed class GuiBuilder {
                 borderRadius.topRight.convert(),
                 borderRadius.bottomLeft.convert(),
                 borderRadius.bottomRight.convert(),
-                color
+                backgroundColor
             )
         }
 
