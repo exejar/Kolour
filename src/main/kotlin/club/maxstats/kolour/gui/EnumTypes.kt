@@ -1,11 +1,4 @@
 package club.maxstats.kolour.gui
-
-enum class ComponentType {
-    WINDOW,
-    FRAME,
-    TEXT_FIELD,
-    LIST,
-}
 enum class AlignDirection {
     COLUMN,
     ROW
@@ -16,4 +9,9 @@ enum class Alignment {
     END,
     SPACE_BETWEEN,
     SPACE_APART
+}
+enum class Position {
+    ABSOLUTE,
+    RELATIVE,
+    STATIC
 }
