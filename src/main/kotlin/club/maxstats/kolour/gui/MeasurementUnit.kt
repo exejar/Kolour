@@ -9,8 +9,7 @@ data class RemUnit(val rem: Float) : MeasurementUnit(rem) {
      * @return The calculated pixel value based on the REM value and font size.
      */
     fun toPixels(fontSize: Float): Float {
-        // rem calculation
-        return rem
+        return fontSize * rem
     }
 }
 data class PercentUnit(val percent: Float): MeasurementUnit(percent) {
@@ -21,8 +20,7 @@ data class PercentUnit(val percent: Float): MeasurementUnit(percent) {
      * @return The calculated pixel value based on the percentage.
      */
     fun toPixels(full: Float): Float {
-        // percent calculation
-        return percent
+        return full * (percent / 100)
     }
 }
 data class PixelUnit(val pixel: Float): MeasurementUnit(pixel)
