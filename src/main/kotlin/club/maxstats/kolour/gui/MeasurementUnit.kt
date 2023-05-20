@@ -8,7 +8,7 @@ data class RemUnit(val rem: Float) : MeasurementUnit(rem) {
      * @param fontSize The font size in pixels.
      * @return The calculated pixel value based on the REM value and font size.
      */
-    fun toPixels(fontSize: Float): Float {
+    fun toPixels(fontSize: Int): Float {
         return fontSize * rem
     }
 }
