@@ -1,7 +1,5 @@
 package club.maxstats.kolour.gui
 
-import club.maxstats.kolour.render.drawBlur
-import club.maxstats.kolour.render.drawRectangle
 import club.maxstats.kolour.util.Color
 
 data class Radius<T>(
@@ -26,14 +24,14 @@ sealed class GuiBuilder {
     val children = arrayListOf<GuiBuilder>()
 
     var color: Color = Color.none
-    var width: String = "0px"
-    var height: String = "0px"
-    var blur: String = "0px"
+    var width: MeasurementUnit = 0.px
+    var height: MeasurementUnit = 0.px
+    var blur: MeasurementUnit = 0.px
     var direction: AlignDirection = AlignDirection.ROW
     var alignment: Alignment = Alignment.START
-    var borderRadius: Radius<String> = Radius("0px")
-    var padding: Sides<String> = Sides("0px")
-    var margin: Sides<String> = Sides("0px")
+    var borderRadius: Radius<MeasurementUnit> = Radius(0.px)
+    var padding: Sides<MeasurementUnit> = Sides(0.px)
+    var margin: Sides<MeasurementUnit> = Sides(0.px)
 
     protected fun <T: GuiBuilder>init(component: T, init: T.() -> Unit): T {
         component.init()
@@ -61,23 +59,23 @@ fun gui(init: GuiScreen.() -> Unit): GuiScreen {
 
 fun example() {
     gui {
-        width = "30rem"
-        height = "30rem"
+        width = 30.rem
+        height = 30.rem
 
         color = Color.white
-        blur = "18px"
-        borderRadius = Radius("10px")
+        blur = 18.px
+        borderRadius = Radius(10.px)
 
         direction = AlignDirection.COLUMN
         alignment = Alignment.SPACE_BETWEEN
 
         component {
-            width = "10rem"
-            height = "10rem"
+            width = 10.rem
+            height = 10.rem
 
             color = Color.none
-            borderRadius.topLeft = "10px"
-            borderRadius.topRight = "10px"
+            borderRadius.topLeft = 10.px
+            borderRadius.topRight = 10.px
 
             onClick {
                 println("Clicked Component!")
