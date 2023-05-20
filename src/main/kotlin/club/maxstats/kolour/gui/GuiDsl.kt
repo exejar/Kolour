@@ -4,23 +4,12 @@ import club.maxstats.kolour.render.*
 import club.maxstats.kolour.util.Color
 import club.maxstats.kolour.util.mc
 
-data class Radius<T>(
-    var topLeft: T,
-    var topRight: T,
-    var bottomLeft: T,
-    var bottomRight: T
-) {
-    constructor(default: T) : this(default, default, default, default)
+class GuiScreen: GuiBuilder() {
+    init {
+        rootContainer = this
+        parent = this
+    }
 }
-data class Sides<T>(
-    var left: T,
-    var top: T,
-    var right: T,
-    var bottom: T
-) {
-    constructor(default: T) : this(default, default, default, default)
-}
-class GuiScreen: GuiBuilder()
 open class GuiComponent: GuiBuilder()
 sealed class GuiBuilder {
     var position: Position = Position.STATIC
@@ -45,10 +34,19 @@ sealed class GuiBuilder {
     var borderRadius: Radius<MeasurementUnit> = Radius(0.px)
     var backgroundColor: Color = Color.none
 
+    protected var onScroll: (() -> Unit)? = null
+    protected var onClick: (() -> Unit)? = null
+    protected var onUpdate: (() -> Unit)? = null
+    protected var onRender: (() -> Unit)? = null
+
     protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(fontSize)
     protected val children = arrayListOf<GuiBuilder>()
+    protected lateinit var rootContainer: GuiScreen
+    protected lateinit var parent: GuiBuilder
 
     protected fun <T: GuiBuilder>init(component: T, init: T.() -> Unit): T {
+        component.rootContainer = this.rootContainer
+        component.parent = this
         component.init()
         children.add(component)
         return component
@@ -57,7 +55,19 @@ sealed class GuiBuilder {
     fun header(init: GuiComponent.() -> Unit) = init(GuiComponent().apply { fontStyle = FontStyle.BOLD; fontSize = 32 }, init)
     fun paragraph(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
 
-    open fun onRender(action: () -> Unit) {
+    fun onRender(action: () -> Unit) {
+        onRender = action
+    }
+    fun onUpdate(action: () -> Unit) {
+        onUpdate = action
+    }
+    fun onClick(action: () -> Unit) {
+        onClick = action
+    }
+    fun onScroll(action: () -> Unit) {
+        onScroll = action
+    }
+    protected fun render(mouseX: Int, mouseY: Int) {
         val pixelX = x.convert()
         val pixelY = y.convert()
         val pixelWidth = width.convert()
@@ -115,18 +125,38 @@ sealed class GuiBuilder {
                 )
             }
         }
+
+        onRender?.invoke()
     }
-    open fun onUpdate(action: () -> Unit) {
+    protected fun update(mouseX: Int, mouseY: Int) {
         fontRenderer = fontManager.getFontRenderer(fontSize)
+        onUpdate?.invoke()
     }
-    open fun onClick(action: () -> Unit) {
+    protected fun click(mouseX: Int, mouseY: Int, mouseButton: Int) {
+        if (isHovering(mouseX, mouseY))
+            onClick?.invoke()
 
+        children.forEach { it.click(mouseX, mouseY, mouseButton) }
+    }
+    protected fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
+        if (isHovering(mouseX, mouseY))
+            onScroll?.invoke()
+
+        children.forEach { it.scroll(mouseX, mouseY, scroll) }
     }
 
+    protected fun isHovering(mouseX: Int, mouseY: Int): Boolean {
+        val pixelX = x.convert()
+        val pixelY = y.convert()
+        val pixelWidth = width.convert()
+        val pixelHeight = height.convert()
+
+        return mouseX.toFloat() in pixelX..(pixelX + pixelWidth) && mouseY.toFloat() in pixelY..(pixelY + pixelHeight)
+    }
     protected fun MeasurementUnit.convert(): Float {
         return when (this) {
-            is RemUnit -> this.toPixels(fontSize)
-            is PercentUnit -> this.toPixels(width.value) //TODO this is temporary, it should be retrieving the parent's width (obviously)
+            is EmUnit -> this.toPixels(fontSize)
+            is RemUnit -> this.toPixels(rootContainer.fontSize)
             is ViewportWidthUnit -> this.toPixels(mc.displayWidth.toFloat())
             is ViewportHeightUnit -> this.toPixels(mc.displayHeight.toFloat())
             is PixelUnit -> this.pixel
@@ -146,22 +176,36 @@ fun example() {
         height = 30.rem
 
         backgroundColor = Color.white
-        blur = 18.px
+        blur = 1.125.rem
         borderRadius = Radius(10.px)
 
         direction = AlignDirection.COLUMN
         alignment = Alignment.SPACE_BETWEEN
 
         component {
+            text = "Click Me!"
             width = 10.rem
             height = 10.rem
 
-            backgroundColor = Color.none
+            backgroundColor = Color(0, 150, 0, 255)
             borderRadius.topLeft = 10.px
             borderRadius.topRight = 10.px
 
             onClick {
-                println("Clicked Component!")
+                text = "You Rule!"
+            }
+        }
+        component {
+            text = "Don't Click Me!"
+            width = 10.rem
+            height = 10.rem
+
+            backgroundColor = Color(150, 0, 0, 255)
+            borderRadius.bottomLeft = 10.px
+            borderRadius.bottomRight = 10.px
+
+            onClick {
+                text = "You Suck!"
             }
         }
     }
