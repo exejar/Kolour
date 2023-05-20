@@ -16,6 +16,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
+val fontManager = FontManager()
 class FontManager {
     private val defaultFont: GLFont
     val defaultFontRenderer: FontRenderer
