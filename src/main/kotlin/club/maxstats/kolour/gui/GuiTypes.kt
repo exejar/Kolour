@@ -13,7 +13,8 @@ enum class Alignment {
 enum class Position {
     ABSOLUTE,
     RELATIVE,
-    STATIC
+    STATIC,
+    FIXED
 }
 data class Radius<T>(
     var topLeft: T,
