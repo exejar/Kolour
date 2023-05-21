@@ -13,8 +13,10 @@ class GuiScreen: GuiBuilder() {
 open class GuiComponent: GuiBuilder()
 sealed class GuiBuilder {
     var position: Position = Position.STATIC
-    var x: MeasurementUnit = 0.px
-    var y: MeasurementUnit = 0.px
+    var top: MeasurementUnit? = null
+    var right: MeasurementUnit? = null
+    var bottom: MeasurementUnit? = null
+    var left: MeasurementUnit? = null
     var width: MeasurementUnit = 0.px
     var height: MeasurementUnit = 0.px
     var padding: Sides<MeasurementUnit> = Sides(0.px)
@@ -39,12 +41,18 @@ sealed class GuiBuilder {
     protected var onUpdate: (() -> Unit)? = null
     protected var onRender: (() -> Unit)? = null
 
-    protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(fontSize)
-    protected val children = arrayListOf<GuiBuilder>()
-    protected lateinit var rootContainer: GuiScreen
-    protected lateinit var parent: GuiBuilder
+    /* Computed coordinates in pixels meant to be used for rendering the component */
+    internal var compX: Float = 0f
+    internal var compY: Float = 0f
+    internal var compWidth: Float = 0f
+    internal var compHeight: Float = 0f
 
-    protected fun <T: GuiBuilder>init(component: T, init: T.() -> Unit): T {
+    protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(fontSize)
+    protected val children = arrayListOf<GuiComponent>()
+    internal lateinit var rootContainer: GuiScreen
+    internal lateinit var parent: GuiBuilder
+
+    protected fun <T: GuiComponent>init(component: T, init: T.() -> Unit): T {
         component.rootContainer = this.rootContainer
         component.parent = this
         component.init()
@@ -52,7 +60,7 @@ sealed class GuiBuilder {
         return component
     }
     fun component(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
-    fun header(init: GuiComponent.() -> Unit) = init(GuiComponent().apply { fontStyle = FontStyle.BOLD; fontSize = 32 }, init)
+    fun header(init: GuiComponent.() -> Unit) = init(GuiComponent().apply { fontStyle = FontStyle.BOLD; fontSize = rootContainer.fontSize * 2 }, init)
     fun paragraph(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
 
     fun onRender(action: () -> Unit) {
@@ -67,19 +75,14 @@ sealed class GuiBuilder {
     fun onScroll(action: () -> Unit) {
         onScroll = action
     }
-    protected fun render(mouseX: Int, mouseY: Int) {
-        val pixelX = x.convert()
-        val pixelY = y.convert()
-        val pixelWidth = width.convert()
-        val pixelHeight = height.convert()
-
+    internal fun render(mouseX: Int, mouseY: Int) {
         /* Check to see if blur should be applied */
         if (blur.value > 0) {
             drawBlur(
-                pixelX,
-                pixelY,
-                pixelWidth,
-                pixelHeight,
+                compX,
+                compY,
+                compWidth,
+                compHeight,
                 borderRadius.topLeft.convert(),
                 borderRadius.topRight.convert(),
                 borderRadius.bottomLeft.convert(),
@@ -91,10 +94,10 @@ sealed class GuiBuilder {
         /* Check to see if component should be rendered */
         if (color.alpha > 0 && width.value > 0 && height.value > 0) {
             drawRectangle(
-                pixelX,
-                pixelY,
-                pixelWidth,
-                pixelHeight,
+                compX,
+                compY,
+                compWidth,
+                compHeight,
                 borderRadius.topLeft.convert(),
                 borderRadius.topRight.convert(),
                 borderRadius.bottomLeft.convert(),
@@ -108,9 +111,9 @@ sealed class GuiBuilder {
             if (wrapText) {
                 fontRenderer.drawWrappedString(
                     text,
-                    pixelX,
-                    pixelY,
-                    pixelWidth,
+                    compX,
+                    compY,
+                    compWidth,
                     lineSpacing.convert(),
                     color.toRGBA(),
                     fontStyle
@@ -118,8 +121,8 @@ sealed class GuiBuilder {
             } else {
                 fontRenderer.drawString(
                     text,
-                    pixelX,
-                    pixelY,
+                    compX,
+                    compY,
                     color.toRGBA(),
                     fontStyle
                 )
@@ -128,32 +131,34 @@ sealed class GuiBuilder {
 
         onRender?.invoke()
     }
-    protected fun update(mouseX: Int, mouseY: Int) {
+    internal fun update(mouseX: Int, mouseY: Int, compPosition: ComputedPosition) {
         fontRenderer = fontManager.getFontRenderer(fontSize)
+        compX = compPosition.x
+        compY = compPosition.y
+        compWidth = compPosition.width
+        compHeight = compPosition.height
+
+        children.forEach { alignChildren(it.children, it.alignment, it.direction, mouseX, mouseY) }
+
         onUpdate?.invoke()
     }
-    protected fun click(mouseX: Int, mouseY: Int, mouseButton: Int) {
+    internal fun click(mouseX: Int, mouseY: Int, mouseButton: Int) {
         if (isHovering(mouseX, mouseY))
             onClick?.invoke()
 
         children.forEach { it.click(mouseX, mouseY, mouseButton) }
     }
-    protected fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
+    internal fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
         if (isHovering(mouseX, mouseY))
             onScroll?.invoke()
 
         children.forEach { it.scroll(mouseX, mouseY, scroll) }
     }
 
-    protected fun isHovering(mouseX: Int, mouseY: Int): Boolean {
-        val pixelX = x.convert()
-        val pixelY = y.convert()
-        val pixelWidth = width.convert()
-        val pixelHeight = height.convert()
-
-        return mouseX.toFloat() in pixelX..(pixelX + pixelWidth) && mouseY.toFloat() in pixelY..(pixelY + pixelHeight)
+    internal fun isHovering(mouseX: Int, mouseY: Int): Boolean {
+        return mouseX.toFloat() in compX..(compX + compWidth) && mouseY.toFloat() in compY..(compY + compHeight)
     }
-    protected fun MeasurementUnit.convert(): Float {
+    internal fun MeasurementUnit.convert(): Float {
         return when (this) {
             is EmUnit -> this.toPixels(fontSize)
             is RemUnit -> this.toPixels(rootContainer.fontSize)
