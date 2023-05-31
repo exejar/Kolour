@@ -30,7 +30,8 @@ sealed class GuiBuilder {
     var wrapText: Boolean = true
 
     var direction: AlignDirection = AlignDirection.ROW
-    var alignment: Alignment = Alignment.START
+    var alignItems: ItemAlignment = ItemAlignment.START
+    var alignContent: ContentAlignment = ContentAlignment.START
 
     var blur: MeasurementUnit = 0.px
     var borderRadius: Radius<MeasurementUnit> = Radius(0.px)
@@ -148,7 +149,7 @@ sealed class GuiBuilder {
 
         // align and update children
         if (children.isNotEmpty())
-            alignChildren(children, alignment, direction, mouseX, mouseY)
+            alignChildren(children, alignItems, alignContent, direction, mouseX, mouseY)
 
         onUpdate?.invoke()
     }
@@ -195,7 +196,7 @@ fun example() {
         borderRadius = Radius(10.px)
 
         direction = AlignDirection.COLUMN
-        alignment = Alignment.SPACE_BETWEEN
+        alignItems = ItemAlignment.SPACE_BETWEEN
 
         component {
             text = "Click Me!"

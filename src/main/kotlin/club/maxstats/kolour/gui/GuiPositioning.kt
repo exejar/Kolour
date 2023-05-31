@@ -5,17 +5,18 @@ package club.maxstats.kolour.gui
  */
 fun alignChildren(
     children: ArrayList<GuiComponent>,
-    alignment: Alignment,
+    alignItems: ItemAlignment,
+    alignContent: ContentAlignment,
     direction: AlignDirection,
     mouseX: Int,
     mouseY: Int
 ) {
-    when (alignment) {
-        Alignment.START -> alignStart(children, direction, mouseX, mouseY)
-        Alignment.MIDDLE -> alignMiddle(children, direction, mouseX, mouseY)
-        Alignment.END -> alignEnd(children, direction, mouseX, mouseY)
-        Alignment.SPACE_BETWEEN -> alignSpaceBetween(children, direction, mouseX, mouseY)
-        Alignment.SPACE_APART -> alignSpaceApart(children, direction, mouseX, mouseY)
+    when (alignItems) {
+        ItemAlignment.START -> alignStart(children, direction, mouseX, mouseY)
+        ItemAlignment.MIDDLE -> alignMiddle(children, direction, mouseX, mouseY)
+        ItemAlignment.END -> alignEnd(children, direction, mouseX, mouseY)
+        ItemAlignment.SPACE_BETWEEN -> alignSpaceBetween(children, direction, mouseX, mouseY)
+        ItemAlignment.SPACE_APART -> alignSpaceApart(children, direction, mouseX, mouseY)
     }
 }
 
