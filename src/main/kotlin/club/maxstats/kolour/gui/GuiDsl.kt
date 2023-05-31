@@ -75,7 +75,7 @@ sealed class GuiBuilder {
     fun onScroll(action: () -> Unit) {
         onScroll = action
     }
-    internal fun render(mouseX: Int, mouseY: Int) {
+    fun render(mouseX: Int, mouseY: Int) {
         /* Check to see if blur should be applied */
         if (blur.value > 0) {
             drawBlur(
@@ -130,15 +130,25 @@ sealed class GuiBuilder {
         }
 
         onRender?.invoke()
-    }
-    internal fun update(mouseX: Int, mouseY: Int, compPosition: ComputedPosition) {
-        fontRenderer = fontManager.getFontRenderer(fontSize)
-        compX = compPosition.x
-        compY = compPosition.y
-        compWidth = compPosition.width
-        compHeight = compPosition.height
 
-        children.forEach { alignChildren(it.children, it.alignment, it.direction, mouseX, mouseY) }
+        children.forEach { it.render(mouseX, mouseY) }
+    }
+    fun update(mouseX: Int, mouseY: Int, compPosition: ComputedPosition = ComputedPosition(0f, 0f, 0f, 0f)) {
+        fontRenderer = fontManager.getFontRenderer(fontSize)
+
+        var compPos = compPosition
+        // compute position based on minecraft's resolution
+        if (rootContainer == this)
+            compPos = alignRootContainer(this)
+
+        compX = compPos.x
+        compY = compPos.y
+        compWidth = compPos.width
+        compHeight = compPos.height
+
+        // align and update children
+        if (children.isNotEmpty())
+            alignChildren(children, alignment, direction, mouseX, mouseY)
 
         onUpdate?.invoke()
     }
