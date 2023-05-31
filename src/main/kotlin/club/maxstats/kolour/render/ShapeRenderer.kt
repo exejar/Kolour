@@ -5,7 +5,7 @@ import club.maxstats.kolour.event.ResizeWindowEvent
 import club.maxstats.kolour.render.shader.BlurProgram
 import club.maxstats.kolour.render.shader.RectangleProgram
 import club.maxstats.kolour.util.mc
-import club.maxstats.weave.loader.api.event.SubscribeEvent
+import net.weavemc.loader.api.event.SubscribeEvent
 import org.lwjgl.opengl.GL11
 
 val rectProgram = RectangleProgram()
