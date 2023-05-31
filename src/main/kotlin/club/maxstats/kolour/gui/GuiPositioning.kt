@@ -20,12 +20,12 @@ fun alignChildren(
 }
 
 // Root container will always be positioned as if it's static and in a column.
-internal fun alignRootContainer(rootContainer: GuiScreen): ComputedPosition {
-    // TODO shrink width and height based on margin.right and margin.bottom (only if it over extends minecraft's resolution)
-    val compX = with(rootContainer) { margin.left.convert() }
-    val compY = with(rootContainer) { margin.top.convert() }
-    val compWidth = with(rootContainer) { width.convert() }
-    val compHeight = with(rootContainer) { height.convert() }
+
+internal fun GuiScreen.computeRootPosition(): ComputedPosition {
+    val compX = margin.left.convert()
+    val compY = margin.top.convert()
+    val compWidth = width.convert()
+    val compHeight = height.convert()
 
     return ComputedPosition(compX, compY, compWidth, compHeight)
 }
@@ -44,87 +44,92 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
     var currentY = ancestorY
 
     for (child in children) {
-        var compX = with (child) { margin.left.convert() }
-        var compY = with (child) { margin.top.convert() }
-        var compWidth = with(child) { width.convert() }
-        var compHeight = with(child) { height.convert() }
+        child.run {
+            var computedX = margin.left.convert()
+            var computedY = margin.top.convert()
+            var computedWidth = width.convert()
+            var computedHeight = height.convert()
 
-        var alignFlow = 0f
+            var alignFlow = 0f
 
-        /* Called after the child's x, y, width, and height and component's alignment are computed */
-        when (child.position) {
-            Position.STATIC -> {     // Position according to the normal flow of GUI
-                alignFlow = if (direction == AlignDirection.ROW)
-                    with(child) { compX + compWidth + margin.right.convert() }
+            /* Called after the child's x, y, width, and height and component's alignment are computed */
+            when (child.position) {
+                Position.STATIC -> {     // Position according to the normal flow of GUI
+                    alignFlow = if (direction == AlignDirection.ROW)
+                        computedX + computedWidth + margin.right.convert()
+                    else
+                        computedY + computedHeight + margin.bottom.convert()
+
+                    computedX += currentX
+                    computedY += currentY
+                }
+
+                Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
+                    alignFlow = if (direction == AlignDirection.ROW)
+                        computedX + computedWidth + margin.right.convert()
+                    else
+                        computedY + computedHeight + margin.bottom.convert()
+
+                    computedX += currentX + (left?.convert() ?: 0f) - (right?.convert() ?: 0f)
+                    computedY += currentY + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f)
+                }
+
+                Position.ABSOLUTE -> {   // Position relative to nearest positioned ancestor (Instead of positioned relative to the viewport, like fixed positioning)
+                    // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
+                    computedX = ancestorX + (left?.convert() ?: 0f)
+                    computedY = ancestorY + (top?.convert() ?: 0f)
+
+                    if (computedWidth == 0f)
+                        computedWidth = ancestorWidth - (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert()
+                    if (computedHeight == 0f)
+                        computedHeight = ancestorHeight - (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) - margin.bottom.convert()
+
+                }
+
+                Position.FIXED -> {      // Position relative to the viewport. Use top, right, bottom, and left properties to position the component
+                    val root = child.rootContainer
+                    // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
+                    computedX = root.compX + (left?.convert() ?: 0f)
+                    computedY = root.compY + (top?.convert() ?: 0f)
+
+                    if (computedWidth == 0f)
+                        computedWidth = root.compWidth - (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert()
+                    if (computedHeight == 0f)
+                        computedHeight = root.compHeight - (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) - margin.bottom.convert()
+                }
+            }
+
+            // apply padding
+            positionedAncestor.run {
+                computedX += padding.left.convert()
+                computedY += padding.top.convert()
+
+                val ancestorMaxX = compX + compWidth - padding.right.convert()
+                val ancestorMaxY = compY + compHeight - padding.bottom.convert()
+
+                val xRemainder = computedX + computedWidth - ancestorMaxX
+                val yRemainder = computedY + computedHeight - ancestorMaxY
+
+                if (xRemainder > 0)
+                    computedX -= xRemainder
+                if (yRemainder > 0)
+                    computedY -= yRemainder
+
+                if (direction == AlignDirection.ROW)
+                    currentX += alignFlow
                 else
-                    with(child) { compY + compHeight + margin.bottom.convert() }
+                    currentY += alignFlow
 
-                compX += currentX
-                compY += currentY
-            }
-            Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
-                alignFlow = if (direction == AlignDirection.ROW)
-                    with(child) { compX + compWidth + margin.right.convert() }
-                else
-                    with(child) { compY + compHeight + margin.bottom.convert() }
+                val computedPosition = ComputedPosition(
+                    computedX,
+                    computedY,
+                    computedWidth,
+                    computedHeight
+                )
 
-                compX += currentX + with(child) { (left?.convert() ?: 0f) - (right?.convert() ?: 0f) }
-                compY += currentY + with(child) { (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) }
-            }
-            Position.ABSOLUTE -> {   // Position relative to nearest positioned ancestor (Instead of positioned relative to the viewport, like fixed positioning)
-                // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                compX = ancestorX + with(child) { (left?.convert() ?: 0f) }
-                compY = ancestorY + with(child) { (top?.convert() ?: 0f) }
-
-                if (compWidth == 0f)
-                    compWidth = ancestorWidth - with(child) { (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert() }
-                if (compHeight == 0f)
-                    compHeight = ancestorHeight - with(child) { (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) - margin.bottom.convert() }
-            }
-            Position.FIXED -> {      // Position relative to the viewport. Use top, right, bottom, and left properties to position the component
-                val root = child.rootContainer
-                // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                compX = root.compX + with(child) { (left?.convert() ?: 0f) }
-                compY = root.compY + with(child) { (top?.convert() ?: 0f) }
-
-                if (compWidth == 0f)
-                    compWidth = root.compWidth - with(child) { (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert() }
-                if (compHeight == 0f)
-                    compHeight = root.compHeight - with(child) { (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) - margin.bottom.convert() }
+                child.update(mouseX, mouseY, computedPosition)
             }
         }
-
-        // apply padding
-        compX += with(positionedAncestor) { padding.left.convert() }
-        compY += with(positionedAncestor) { padding.top.convert() }
-
-        val ancestorMaxX = with(positionedAncestor) {
-            this.compX + this.compWidth - padding.right.convert()
-        }
-        val ancestorMaxY = with(positionedAncestor) {
-            this.compY + this.compHeight - padding.bottom.convert()
-        }
-        val xRemainder = compX + compWidth - ancestorMaxX
-        val yRemainder = compY + compHeight - ancestorMaxY
-
-        if (xRemainder > 0)
-            compX -= xRemainder
-        if (yRemainder > 0)
-            compY -= yRemainder
-
-        if (direction == AlignDirection.ROW)
-            currentX += alignFlow
-        else
-            currentY += alignFlow
-
-        val computedPosition = ComputedPosition(
-            compX,
-            compY,
-            compWidth,
-            compHeight
-        )
-
-        child.update(mouseX, mouseY, computedPosition)
     }
 }
 

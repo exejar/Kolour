@@ -139,7 +139,7 @@ sealed class GuiBuilder {
         var compPos = compPosition
         // compute position based on minecraft's resolution
         if (rootContainer == this)
-            compPos = alignRootContainer(this)
+            compPos = this.computeRootPosition()
 
         compX = compPos.x
         compY = compPos.y
