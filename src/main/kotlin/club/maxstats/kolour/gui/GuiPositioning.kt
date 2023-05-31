@@ -44,8 +44,8 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
     var currentY = ancestorY
 
     for (child in children) {
-        var compX = 0f
-        var compY = 0f
+        var compX = with (child) { margin.left.convert() }
+        var compY = with (child) { margin.top.convert() }
         var compWidth = with(child) { width.convert() }
         var compHeight = with(child) { height.convert() }
 
@@ -55,26 +55,26 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
         when (child.position) {
             Position.STATIC -> {     // Position according to the normal flow of GUI
                 alignFlow = if (direction == AlignDirection.ROW)
-                    with(child) { compX + compWidth + margin.left.convert() + margin.right.convert() }
+                    with(child) { compX + compWidth + margin.right.convert() }
                 else
-                    with(child) { compY + compHeight + margin.top.convert() + margin.bottom.convert() }
+                    with(child) { compY + compHeight + margin.bottom.convert() }
 
                 compX += currentX
                 compY += currentY
             }
             Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
                 alignFlow = if (direction == AlignDirection.ROW)
-                    with(child) { compX + compWidth + margin.left.convert() + margin.right.convert() }
+                    with(child) { compX + compWidth + margin.right.convert() }
                 else
-                    with(child) { compY + compHeight + margin.top.convert() + margin.bottom.convert() }
+                    with(child) { compY + compHeight + margin.bottom.convert() }
 
                 compX += currentX + with(child) { (left?.convert() ?: 0f) - (right?.convert() ?: 0f) }
                 compY += currentY + with(child) { (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) }
             }
             Position.ABSOLUTE -> {   // Position relative to nearest positioned ancestor (Instead of positioned relative to the viewport, like fixed positioning)
                 // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                compX = ancestorX + with(child) { margin.left.convert() + (left?.convert() ?: 0f) }
-                compY = ancestorY + with(child) { margin.top.convert() + (top?.convert() ?: 0f) }
+                compX = ancestorX + with(child) { (left?.convert() ?: 0f) }
+                compY = ancestorY + with(child) { (top?.convert() ?: 0f) }
 
                 if (compWidth == 0f)
                     compWidth = ancestorWidth - with(child) { (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert() }
@@ -84,8 +84,8 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
             Position.FIXED -> {      // Position relative to the viewport. Use top, right, bottom, and left properties to position the component
                 val root = child.rootContainer
                 // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                compX = root.compX + with(child) { margin.left.convert() + (left?.convert() ?: 0f) }
-                compY = root.compY + with(child) { margin.top.convert() + (top?.convert() ?: 0f) }
+                compX = root.compX + with(child) { (left?.convert() ?: 0f) }
+                compY = root.compY + with(child) { (top?.convert() ?: 0f) }
 
                 if (compWidth == 0f)
                     compWidth = root.compWidth - with(child) { (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert() }
@@ -94,15 +94,28 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
             }
         }
 
-        if (direction == AlignDirection.ROW) {
-            currentX += alignFlow
-            compX += with(child) { padding.left.convert() }
-            compWidth -= with(child) { padding.right.convert() }
-        } else {
-            currentY += alignFlow
-            compY += with(child) { padding.top.convert() }
-            compHeight -= with(child) { padding.bottom.convert() }
+        // apply padding
+        compX += with(positionedAncestor) { padding.left.convert() }
+        compY += with(positionedAncestor) { padding.top.convert() }
+
+        val ancestorMaxX = with(positionedAncestor) {
+            this.compX + this.compWidth - padding.right.convert()
         }
+        val ancestorMaxY = with(positionedAncestor) {
+            this.compY + this.compHeight - padding.bottom.convert()
+        }
+        val xRemainder = compX + compWidth - ancestorMaxX
+        val yRemainder = compY + compHeight - ancestorMaxY
+
+        if (xRemainder > 0)
+            compX -= xRemainder
+        if (yRemainder > 0)
+            compY -= yRemainder
+
+        if (direction == AlignDirection.ROW)
+            currentX += alignFlow
+        else
+            currentY += alignFlow
 
         val computedPosition = ComputedPosition(
             compX,
