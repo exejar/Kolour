@@ -3,7 +3,6 @@ package club.maxstats.kolour.gui
 import club.maxstats.kolour.render.*
 import club.maxstats.kolour.util.Color
 import club.maxstats.kolour.util.getScaledResolution
-import club.maxstats.kolour.util.mc
 
 class GuiScreen: GuiBuilder() {
     init {
@@ -31,8 +30,8 @@ sealed class GuiBuilder {
     var wrapText: Boolean = true
 
     var direction: AlignDirection = AlignDirection.ROW
-    var alignItems: ItemAlignment = ItemAlignment.START
     var alignContent: ContentAlignment = ContentAlignment.START
+    var alignItems: ItemAlignment = ItemAlignment.START
 
     var blur: MeasurementUnit = 0.px
     var borderRadius: Radius<MeasurementUnit> = Radius(0.px)
@@ -150,7 +149,7 @@ sealed class GuiBuilder {
 
         // align and update children
         if (children.isNotEmpty())
-            alignChildren(children, alignItems, alignContent, direction, mouseX, mouseY)
+            alignChildren(children, alignContent, alignItems, direction, mouseX, mouseY)
 
         onUpdate?.invoke()
     }
@@ -197,7 +196,7 @@ fun example() {
         borderRadius = Radius(10.px)
 
         direction = AlignDirection.COLUMN
-        alignItems = ItemAlignment.SPACE_BETWEEN
+        alignContent = ContentAlignment.SPACE_BETWEEN
 
         component {
             text = "Click Me!"

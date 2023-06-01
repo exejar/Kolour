@@ -3,12 +3,12 @@ enum class AlignDirection {
     COLUMN,
     ROW
 }
-enum class ContentAlignment {
+enum class ItemAlignment {
     START,
     MIDDLE,
     END
 }
-enum class ItemAlignment {
+enum class ContentAlignment {
     START,
     MIDDLE,
     END,

@@ -5,18 +5,18 @@ package club.maxstats.kolour.gui
  */
 fun alignChildren(
     children: ArrayList<GuiComponent>,
-    alignItems: ItemAlignment,
     alignContent: ContentAlignment,
+    alignItems: ItemAlignment,
     direction: AlignDirection,
     mouseX: Int,
     mouseY: Int
 ) {
-    when (alignItems) {
-        ItemAlignment.START -> itemsStart(children, direction, alignContent, mouseX, mouseY)
-        ItemAlignment.MIDDLE -> itemsMiddle(children, direction, alignContent, mouseX, mouseY)
-        ItemAlignment.END -> itemsEnd(children, direction, alignContent, mouseX, mouseY)
-        ItemAlignment.SPACE_BETWEEN -> itemsBetween(children, direction, alignContent, mouseX, mouseY)
-        ItemAlignment.SPACE_APART -> itemsApart(children, direction, alignContent, mouseX, mouseY)
+    when (alignContent) {
+        ContentAlignment.START -> itemsStart(children, direction, alignItems, mouseX, mouseY)
+        ContentAlignment.MIDDLE -> itemsMiddle(children, direction, alignItems, mouseX, mouseY)
+        ContentAlignment.END -> itemsEnd(children, direction, alignItems, mouseX, mouseY)
+        ContentAlignment.SPACE_BETWEEN -> itemsBetween(children, direction, alignItems, mouseX, mouseY)
+        ContentAlignment.SPACE_APART -> itemsApart(children, direction, alignItems, mouseX, mouseY)
     }
 }
 
@@ -33,27 +33,27 @@ internal fun GuiScreen.computeRootPosition(): ComputedPosition {
 /**
  * @return computed content position for child
  */
-private fun GuiComponent.alignContent(alignment: ContentAlignment, direction: AlignDirection, computedPosition: ComputedPosition) {
+private fun GuiComponent.alignItems(alignment: ItemAlignment, direction: AlignDirection, computedPosition: ComputedPosition) {
     val positionedAncestor = findPositionedAncestor()
     when (alignment) {
-        ContentAlignment.MIDDLE -> {
+        ItemAlignment.MIDDLE -> {
             if (direction == AlignDirection.COLUMN)
                 computedPosition.x = positionedAncestor.padding.left.convert() + (positionedAncestor.compWidth / 2) - (computedPosition.width / 2) - positionedAncestor.padding.right.convert()
             else
                 computedPosition.y = positionedAncestor.padding.top.convert() + (positionedAncestor.compHeight / 2) - (computedPosition.height / 2) - positionedAncestor.padding.bottom.convert()
         }
-        ContentAlignment.END -> {
+        ItemAlignment.END -> {
             if (direction == AlignDirection.COLUMN)
                 computedPosition.x = positionedAncestor.compWidth - computedPosition.width
             else
                 computedPosition.y = positionedAncestor.compHeight - computedPosition.height
         }
-        ContentAlignment.START -> {
+        ItemAlignment.START -> {
             // do nothing
         }
     }
 }
-private fun itemsStart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
+private fun itemsStart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first().parent
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -82,8 +82,8 @@ private fun itemsStart(children: ArrayList<GuiComponent>, direction: AlignDirect
             // Align content before layout computation.
             // Content alignment should only be applied to non-fixed/absolute components
             if (child.position != Position.FIXED && child.position != Position.ABSOLUTE) {
-                alignContent(
-                    alignContent,
+                alignItems(
+                    alignItems,
                     direction,
                     computedPosition
                 )
@@ -188,7 +188,7 @@ fun GuiBuilder.findPositionedAncestor(): GuiBuilder {
     return findPositionedAncestor()
 }
 
-private fun itemsMiddle(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
+private fun itemsMiddle(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -228,7 +228,7 @@ private fun itemsMiddle(children: ArrayList<GuiComponent>, direction: AlignDirec
     }
 }
 
-private fun itemsEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
+private fun itemsEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -268,7 +268,7 @@ private fun itemsEnd(children: ArrayList<GuiComponent>, direction: AlignDirectio
     }
 }
 
-private fun itemsBetween(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
+private fun itemsBetween(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -308,7 +308,7 @@ private fun itemsBetween(children: ArrayList<GuiComponent>, direction: AlignDire
     }
 }
 
-private fun itemsApart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
+private fun itemsApart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
