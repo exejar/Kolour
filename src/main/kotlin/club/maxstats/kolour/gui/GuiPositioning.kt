@@ -12,16 +12,15 @@ fun alignChildren(
     mouseY: Int
 ) {
     when (alignItems) {
-        ItemAlignment.START -> alignStart(children, direction, mouseX, mouseY)
-        ItemAlignment.MIDDLE -> alignMiddle(children, direction, mouseX, mouseY)
-        ItemAlignment.END -> alignEnd(children, direction, mouseX, mouseY)
-        ItemAlignment.SPACE_BETWEEN -> alignSpaceBetween(children, direction, mouseX, mouseY)
-        ItemAlignment.SPACE_APART -> alignSpaceApart(children, direction, mouseX, mouseY)
+        ItemAlignment.START -> itemsStart(children, direction, alignContent, mouseX, mouseY)
+        ItemAlignment.MIDDLE -> itemsMiddle(children, direction, alignContent, mouseX, mouseY)
+        ItemAlignment.END -> itemsEnd(children, direction, alignContent, mouseX, mouseY)
+        ItemAlignment.SPACE_BETWEEN -> itemsBetween(children, direction, alignContent, mouseX, mouseY)
+        ItemAlignment.SPACE_APART -> itemsApart(children, direction, alignContent, mouseX, mouseY)
     }
 }
 
 // Root container will always be positioned as if it's static and in a column.
-
 internal fun GuiScreen.computeRootPosition(): ComputedPosition {
     val compX = margin.left.convert()
     val compY = margin.top.convert()
@@ -31,11 +30,33 @@ internal fun GuiScreen.computeRootPosition(): ComputedPosition {
     return ComputedPosition(compX, compY, compWidth, compHeight)
 }
 
-private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirection, mouseX: Int, mouseY: Int) {
+/**
+ * @return computed content position for child
+ */
+private fun GuiComponent.alignContent(alignment: ContentAlignment, direction: AlignDirection, computedPosition: ComputedPosition) {
+    val positionedAncestor = findPositionedAncestor()
+    when (alignment) {
+        ContentAlignment.MIDDLE -> {
+            if (direction == AlignDirection.COLUMN)
+                computedPosition.x = positionedAncestor.padding.left.convert() + (positionedAncestor.compWidth / 2) - (computedPosition.width / 2) - positionedAncestor.padding.right.convert()
+            else
+                computedPosition.y = positionedAncestor.padding.top.convert() + (positionedAncestor.compHeight / 2) - (computedPosition.height / 2) - positionedAncestor.padding.bottom.convert()
+        }
+        ContentAlignment.END -> {
+            if (direction == AlignDirection.COLUMN)
+                computedPosition.x = positionedAncestor.compWidth - computedPosition.width
+            else
+                computedPosition.y = positionedAncestor.compHeight - computedPosition.height
+        }
+        ContentAlignment.START -> {
+            // do nothing
+        }
+    }
+}
+private fun itemsStart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first().parent
-    val positionedAncestor = findPositionedAncestor(currentComponent)
+    val positionedAncestor = currentComponent.findPositionedAncestor()
 
-    // computed positions already have component's padding applied to them
     val ancestorX = positionedAncestor.compX
     val ancestorY = positionedAncestor.compY
     val ancestorWidth = positionedAncestor.compWidth
@@ -50,6 +71,25 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
             var computedY = margin.top.convert()
             var computedWidth = width.convert()
             var computedHeight = height.convert()
+
+            var computedPosition = ComputedPosition(
+                computedX,
+                computedY,
+                computedWidth,
+                computedHeight
+            )
+
+            // Align content before layout computation.
+            // Content alignment should only be applied to non-fixed/absolute components
+            if (child.position != Position.FIXED && child.position != Position.ABSOLUTE) {
+                alignContent(
+                    alignContent,
+                    direction,
+                    computedPosition
+                )
+                computedX = computedPosition.x
+                computedY = computedPosition.y
+            }
 
             var alignFlow = 0f
 
@@ -100,28 +140,33 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
                 }
             }
 
-            // apply padding
             positionedAncestor.run {
-                computedX += padding.left.convert()
-                computedY += padding.top.convert()
-
+                // only apply padding to children that are outside the padded area
+                val ancestorMinX = compX + padding.left.convert()
+                val ancestorMinY = compY + padding.top.convert()
                 val ancestorMaxX = compX + compWidth - padding.right.convert()
                 val ancestorMaxY = compY + compHeight - padding.bottom.convert()
 
-                val xRemainder = computedX + computedWidth - ancestorMaxX
-                val yRemainder = computedY + computedHeight - ancestorMaxY
+                val leftRemainder = ancestorMinX - computedX
+                val topRemainder = ancestorMinY - computedY
+                val rightRemainder = computedX + computedWidth - ancestorMaxX
+                val bottomRemainder = computedY + computedHeight - ancestorMaxY
 
-                if (xRemainder > 0)
-                    computedX -= xRemainder
-                if (yRemainder > 0)
-                    computedY -= yRemainder
+                if (leftRemainder > 0)
+                    computedX += leftRemainder
+                if (topRemainder > 0)
+                    computedY += topRemainder
+                if (rightRemainder > 0)
+                    computedX -= rightRemainder
+                if (bottomRemainder > 0)
+                    computedY -= bottomRemainder
 
                 if (direction == AlignDirection.ROW)
                     currentX += alignFlow
                 else
                     currentY += alignFlow
 
-                val computedPosition = ComputedPosition(
+                computedPosition = ComputedPosition(
                     computedX,
                     computedY,
                     computedWidth,
@@ -134,16 +179,16 @@ private fun alignStart(children: ArrayList<GuiComponent>, direction: AlignDirect
     }
 }
 
-fun findPositionedAncestor(component: GuiBuilder): GuiBuilder {
-    val parent = component.parent
+fun GuiBuilder.findPositionedAncestor(): GuiBuilder {
+    val parent = parent
 
-    if (parent.position != Position.STATIC || parent == component.rootContainer)
+    if (parent.position != Position.STATIC || parent == rootContainer)
         return parent
 
-    return findPositionedAncestor(component)
+    return findPositionedAncestor()
 }
 
-private fun alignMiddle(children: ArrayList<GuiComponent>, direction: AlignDirection, mouseX: Int, mouseY: Int) {
+private fun itemsMiddle(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -183,7 +228,7 @@ private fun alignMiddle(children: ArrayList<GuiComponent>, direction: AlignDirec
     }
 }
 
-private fun alignEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, mouseX: Int, mouseY: Int) {
+private fun itemsEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -223,7 +268,7 @@ private fun alignEnd(children: ArrayList<GuiComponent>, direction: AlignDirectio
     }
 }
 
-private fun alignSpaceBetween(children: ArrayList<GuiComponent>, direction: AlignDirection, mouseX: Int, mouseY: Int) {
+private fun itemsBetween(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -263,7 +308,7 @@ private fun alignSpaceBetween(children: ArrayList<GuiComponent>, direction: Alig
     }
 }
 
-private fun alignSpaceApart(children: ArrayList<GuiComponent>, direction: AlignDirection, mouseX: Int, mouseY: Int) {
+private fun itemsApart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignContent: ContentAlignment, mouseX: Int, mouseY: Int) {
     var currentX = 0f
     var currentY = 0f
 
@@ -304,8 +349,8 @@ private fun alignSpaceApart(children: ArrayList<GuiComponent>, direction: AlignD
 }
 
 data class ComputedPosition(
-    val x: Float,
-    val y: Float,
-    val width: Float,
-    val height: Float
+    var x: Float,
+    var y: Float,
+    var width: Float,
+    var height: Float
 )

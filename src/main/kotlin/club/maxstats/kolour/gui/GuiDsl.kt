@@ -2,6 +2,7 @@ package club.maxstats.kolour.gui
 
 import club.maxstats.kolour.render.*
 import club.maxstats.kolour.util.Color
+import club.maxstats.kolour.util.getScaledResolution
 import club.maxstats.kolour.util.mc
 
 class GuiScreen: GuiBuilder() {
@@ -173,8 +174,8 @@ sealed class GuiBuilder {
         return when (this) {
             is EmUnit -> this.toPixels(fontSize)
             is RemUnit -> this.toPixels(rootContainer.fontSize)
-            is ViewportWidthUnit -> this.toPixels(mc.displayWidth.toFloat())
-            is ViewportHeightUnit -> this.toPixels(mc.displayHeight.toFloat())
+            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
+            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
             is PixelUnit -> this.pixel
         }
     }
