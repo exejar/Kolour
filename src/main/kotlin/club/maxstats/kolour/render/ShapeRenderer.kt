@@ -11,14 +11,6 @@ import org.lwjgl.opengl.GL11
 val rectProgram = RectangleProgram()
 val blurProgram = BlurProgram()
 
-/* Specifically meant for event listening */
-class ShapeRenderer() {
-    @SubscribeEvent
-    fun onResize(event: ResizeWindowEvent) {
-        blurProgram.blurBuffer.createBindFramebuffer(mc.displayWidth, mc.displayHeight)
-    }
-}
-
 fun drawRectangle(
     x: Float,
     y: Float,

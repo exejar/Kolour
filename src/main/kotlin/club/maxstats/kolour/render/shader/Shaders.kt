@@ -1,13 +1,14 @@
 package club.maxstats.kolour.render.shader
 
+import club.maxstats.kolour.Kolour
+import club.maxstats.kolour.MinecraftScale
 import club.maxstats.kolour.util.Color
 import club.maxstats.kolour.render.drawQuad
 import club.maxstats.kolour.util.getScaledResolution
-import club.maxstats.kolour.util.mc
-import net.minecraft.client.shader.Framebuffer
+//import net.minecraft.client.shader.Framebuffer
+import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL20
-import kotlin.math.ceil
 
 class RectangleProgram : ShaderProgram() {
     val location = Uniform2f("u_location")
@@ -31,13 +32,16 @@ class RectangleProgram : ShaderProgram() {
     ) {
         begin()
 
-        val sr = getScaledResolution()
-        val scale = sr.scaleFactor
-        val trueScale = (mc.displayWidth.toFloat() / sr.scaledWidth_double.toFloat()) / 2f
+        val scale = Kolour.scale
+        val scaleFactor = scale.scaleFactor
+        val trueScale = if (scale is MinecraftScale)
+            (Display.getWidth().toFloat() / scale.getScaledWidth()) / 2
+        else
+            scale.scaleFactor
 
         this.color.color = color
-        location.x = x * scale
-        location.y = mc.displayHeight - (y + height) * scale
+        location.x = x * scaleFactor
+        location.y = Display.getHeight() - (y + height) * scaleFactor
 
         val scaledWidth = width * trueScale
         val scaledHeight = height * trueScale
@@ -65,24 +69,24 @@ class BlurProgram: ShaderProgram() {
         registerShader("assets/shaders/blur.vsh", GL20.GL_VERTEX_SHADER)
     }
 
-    private fun renderFrameBufferTexture(frameBuffer: Framebuffer) {
-        val scaledRes = getScaledResolution()
-        val texX = frameBuffer.framebufferWidth.toFloat() / frameBuffer.framebufferTextureWidth.toFloat()
-        val texY = frameBuffer.framebufferHeight.toFloat() / frameBuffer.framebufferTextureHeight.toFloat()
-
-        glBegin(GL_QUADS)
-        glTexCoord2f(0f, 0f)
-        glVertex3f(0f, scaledRes.scaledHeight.toFloat(), 0f)
-        glTexCoord2f(texX, 0f)
-        glVertex3f(scaledRes.scaledWidth.toFloat(), scaledRes.scaledHeight.toFloat(), 0f)
-        glTexCoord2f(texX, texY)
-        glVertex3f(scaledRes.scaledWidth.toFloat(), 0f, 0f)
-        glTexCoord2f(0f, texY)
-        glVertex3f(0f, 0f, 0f)
-        glEnd()
-    }
-
-    var blurBuffer = Framebuffer(mc.displayWidth, mc.displayHeight, false)
+//    private fun renderFrameBufferTexture(frameBuffer: Framebuffer) {
+//        val scaledRes = getScaledResolution()
+//        val texX = frameBuffer.framebufferWidth.toFloat() / frameBuffer.framebufferTextureWidth.toFloat()
+//        val texY = frameBuffer.framebufferHeight.toFloat() / frameBuffer.framebufferTextureHeight.toFloat()
+//
+//        glBegin(GL_QUADS)
+//        glTexCoord2f(0f, 0f)
+//        glVertex3f(0f, scaledRes.scaledHeight.toFloat(), 0f)
+//        glTexCoord2f(texX, 0f)
+//        glVertex3f(scaledRes.scaledWidth.toFloat(), scaledRes.scaledHeight.toFloat(), 0f)
+//        glTexCoord2f(texX, texY)
+//        glVertex3f(scaledRes.scaledWidth.toFloat(), 0f, 0f)
+//        glTexCoord2f(0f, texY)
+//        glVertex3f(0f, 0f, 0f)
+//        glEnd()
+//    }
+//
+//    var blurBuffer = Framebuffer(Display.getWidth(), Display.getHeight(), false)
     fun render(
         x: Float = 0f,
         y: Float = 0f,
@@ -94,46 +98,46 @@ class BlurProgram: ShaderProgram() {
         bottomRightRadius: Float,
         blurRadius: Float = 18f
     ) {
-        begin()
-
-        blurBuffer.framebufferClear()
-
-        texelSize.x = 1f / mc.displayWidth
-        texelSize.y = 1f / mc.displayHeight
-        texture.textureId = 0
-        this.blurRadius.x = ceil(2 * blurRadius)
-
-        val sr = getScaledResolution()
-        val scale = sr.scaleFactor
-        val trueScale = (mc.displayWidth.toFloat() / sr.scaledWidth_double.toFloat()) / 2f
-
-        location.x = x * scale
-        location.y = mc.displayHeight - (y + height) * scale
-        location.z = width * trueScale
-        location.w = height * trueScale
-
-        rectRadius.x = topRightRadius
-        rectRadius.y = bottomRightRadius
-        rectRadius.z = topLeftRadius
-        rectRadius.w = bottomLeftRadius
-
-        // 1st gaussian blur pass
-        pass.x = 1f
-        applyUniforms(mc.displayWidth.toFloat(), mc.displayHeight.toFloat())
-
-        blurBuffer.bindFramebuffer(true)
-        mc.framebuffer.bindFramebufferTexture()
-        renderFrameBufferTexture(blurBuffer)
-
-        // 2nd gaussian blur pass and region cutting
-        pass.x = 2f
-        applyUniforms(mc.displayWidth.toFloat(), mc.displayHeight.toFloat())
-
-        mc.framebuffer.bindFramebuffer(true)
-        blurBuffer.bindFramebufferTexture()
-        renderFrameBufferTexture(mc.framebuffer)
-
-        end()
+//        begin()
+//
+//        blurBuffer.framebufferClear()
+//
+//        texelSize.x = 1f / Display.getWidth()
+//        texelSize.y = 1f / Display.getHeight()
+//        texture.textureId = 0
+//        this.blurRadius.x = ceil(2 * blurRadius)
+//
+//        val sr = getScaledResolution()
+//        val scale = sr.scaleFactor
+//        val trueScale = (Display.getWidth().toFloat() / sr.scaledWidth_double.toFloat()) / 2f
+//
+//        location.x = x * scale
+//        location.y = Display.getHeight() - (y + height) * scale
+//        location.z = width * trueScale
+//        location.w = height * trueScale
+//
+//        rectRadius.x = topRightRadius
+//        rectRadius.y = bottomRightRadius
+//        rectRadius.z = topLeftRadius
+//        rectRadius.w = bottomLeftRadius
+//
+//        // 1st gaussian blur pass
+//        pass.x = 1f
+//        applyUniforms(Display.getWidth().toFloat(), Display.getHeight().toFloat())
+//
+//        blurBuffer.bindFramebuffer(true)
+//        mc.framebuffer.bindFramebufferTexture()
+//        renderFrameBufferTexture(blurBuffer)
+//
+//        // 2nd gaussian blur pass and region cutting
+//        pass.x = 2f
+//        applyUniforms(Display.getWidth().toFloat(), Display.getHeight().toFloat())
+//
+//        mc.framebuffer.bindFramebuffer(true)
+//        blurBuffer.bindFramebufferTexture()
+//        renderFrameBufferTexture(mc.framebuffer)
+//
+//        end()
     }
 
 }

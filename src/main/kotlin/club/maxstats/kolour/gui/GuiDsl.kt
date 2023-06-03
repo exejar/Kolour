@@ -1,8 +1,9 @@
 package club.maxstats.kolour.gui
 
+import club.maxstats.kolour.Kolour
 import club.maxstats.kolour.render.*
 import club.maxstats.kolour.util.Color
-import club.maxstats.kolour.util.getScaledResolution
+import org.lwjgl.opengl.Display
 
 class GuiScreen: GuiBuilder() {
     init {
@@ -173,8 +174,8 @@ sealed class GuiBuilder {
         return when (this) {
             is EmUnit -> this.toPixels(fontSize)
             is RemUnit -> this.toPixels(rootContainer.fontSize)
-            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
-            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
+            is ViewportWidthUnit -> this.toPixels(Display.getWidth() / Kolour.scale.scaleFactor)
+            is ViewportHeightUnit -> this.toPixels(Display.getHeight() / Kolour.scale.scaleFactor)
             is PixelUnit -> this.pixel
         }
     }
