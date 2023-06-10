@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "1.8.21"
-    application
+    `maven-publish`
 }
 
 group = "club.maxstats.kolour"
@@ -17,9 +17,13 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(8)
 }
 
-application {
-    mainClass.set("MainKt")
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
 }
