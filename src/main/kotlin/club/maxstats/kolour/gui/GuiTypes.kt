@@ -12,8 +12,8 @@ enum class ContentAlignment {
     START,
     MIDDLE,
     END,
-    SPACE_BETWEEN,
-    SPACE_APART
+    BETWEEN,
+    AROUND
 }
 enum class Position {
     ABSOLUTE,

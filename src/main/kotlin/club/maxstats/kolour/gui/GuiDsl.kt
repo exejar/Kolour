@@ -197,7 +197,7 @@ fun example() {
         borderRadius = Radius(10.px)
 
         direction = AlignDirection.COLUMN
-        alignContent = ContentAlignment.SPACE_BETWEEN
+        alignContent = ContentAlignment.BETWEEN
 
         component {
             text = "Click Me!"
