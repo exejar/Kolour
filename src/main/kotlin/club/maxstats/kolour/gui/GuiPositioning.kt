@@ -360,6 +360,53 @@ private fun contentMiddle(children: ArrayList<GuiComponent>, direction: AlignDir
 }
 
 private fun contentEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
+    var contentWidth = 0f
+    var contentHeight = 0f
+
+    // compute full size of all children
+    for (child in children) {
+        child.run {
+            var computedX = margin.left.convert()
+            var computedY = margin.top.convert()
+            val computedWidth = width.convert()
+            val computedHeight = height.convert()
+
+            var alignFlow = 0f
+
+            /* Called after the child's x, y, width, and height and component's alignment are computed */
+            when (child.position) {
+                Position.STATIC -> {     // Position according to the normal flow of GUI
+                    alignFlow = if (direction == AlignDirection.ROW)
+                        computedX + computedWidth + margin.right.convert()
+                    else
+                        computedY + computedHeight + margin.bottom.convert()
+
+                    computedX += contentWidth
+                    computedY += contentHeight
+                }
+
+                Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
+                    alignFlow = if (direction == AlignDirection.ROW)
+                        computedX + computedWidth + margin.right.convert()
+                    else
+                        computedY + computedHeight + margin.bottom.convert()
+
+                    computedX += contentWidth + (left?.convert() ?: 0f) - (right?.convert() ?: 0f)
+                    computedY += contentHeight + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f)
+                }
+
+                else -> {
+                    // nothing
+                }
+            }
+
+            if (direction == AlignDirection.ROW)
+                contentWidth += alignFlow
+            else
+                contentHeight += alignFlow
+        }
+    }
+
     val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -368,8 +415,15 @@ private fun contentEnd(children: ArrayList<GuiComponent>, direction: AlignDirect
     val ancestorWidth = positionedAncestor.compWidth
     val ancestorHeight = positionedAncestor.compHeight
 
-    var currentX = ancestorX + ancestorWidth
-    var currentY = ancestorY + ancestorHeight
+    var currentX = if (direction == AlignDirection.ROW)
+        ancestorX + ancestorWidth - contentWidth
+    else
+        ancestorX
+
+    var currentY = if (direction == AlignDirection.COLUMN)
+        ancestorY + ancestorHeight - contentHeight
+    else
+        ancestorY
 
     for (child in children) {
         child.run {
@@ -402,23 +456,23 @@ private fun contentEnd(children: ArrayList<GuiComponent>, direction: AlignDirect
             /* Called after the child's x, y, width, and height and component's alignment are computed */
             when (child.position) {
                 Position.STATIC -> {     // Position according to the normal flow of GUI
-                    alignFlow = if (direction == AlignDirection.ROW)
-                        computedX - computedWidth - margin.right.convert()
+                    alignFlow += if (direction == AlignDirection.ROW)
+                        computedX + computedWidth + margin.right.convert()
                     else
-                        computedY - computedHeight - margin.bottom.convert()
+                        computedY + computedHeight + margin.bottom.convert()
 
-                    computedX = currentX - computedX
-                    computedY = currentY - computedY
+                    computedX += currentX
+                    computedY += currentY
                 }
 
                 Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
-                    alignFlow = if (direction == AlignDirection.ROW)
-                        computedX - (computedWidth + margin.right.convert())
+                    alignFlow += if (direction == AlignDirection.ROW)
+                        computedX + computedWidth + margin.right.convert()
                     else
-                        computedY - (computedHeight + margin.bottom.convert())
+                        computedY + computedHeight + margin.bottom.convert()
 
-                    computedX = currentX - (computedX + (left?.convert() ?: 0f) - (right?.convert() ?: 0f))
-                    computedY = currentY - (computedY + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f))
+                    computedX += currentX + (left?.convert() ?: 0f) - (right?.convert() ?: 0f)
+                    computedY += currentY + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f)
                 }
 
                 Position.ABSOLUTE -> {   // Position relative to nearest positioned ancestor (Instead of positioned relative to the viewport, like fixed positioning)
@@ -468,9 +522,9 @@ private fun contentEnd(children: ArrayList<GuiComponent>, direction: AlignDirect
                     computedY -= bottomRemainder
 
                 if (direction == AlignDirection.ROW)
-                    currentX -= alignFlow
+                    currentX += alignFlow
                 else
-                    currentY -= alignFlow
+                    currentY += alignFlow
 
                 computedPosition = ComputedPosition(
                     computedX,
