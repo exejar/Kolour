@@ -847,7 +847,7 @@ fun GuiBuilder.findPositionedAncestor(): GuiBuilder {
     if (parent.position != Position.STATIC || parent == rootContainer)
         return parent
 
-    return findPositionedAncestor()
+    return parent.findPositionedAncestor()
 }
 
 data class ComputedPosition(
