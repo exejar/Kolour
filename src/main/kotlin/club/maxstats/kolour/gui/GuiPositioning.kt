@@ -54,7 +54,7 @@ private fun GuiComponent.alignItems(alignment: ItemAlignment, direction: AlignDi
     }
 }
 private fun itemsStart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
-    val currentComponent = children.first().parent
+    val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
     val ancestorX = positionedAncestor.compX
@@ -236,7 +236,7 @@ private fun itemsMiddle(children: ArrayList<GuiComponent>, direction: AlignDirec
         }
     }
 
-    val currentComponent = children.first().parent
+    val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
     val ancestorX = positionedAncestor.compX
@@ -369,7 +369,7 @@ private fun itemsMiddle(children: ArrayList<GuiComponent>, direction: AlignDirec
 }
 
 private fun itemsEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
-    val currentComponent = children.first().parent
+    val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
     val ancestorX = positionedAncestor.compX
