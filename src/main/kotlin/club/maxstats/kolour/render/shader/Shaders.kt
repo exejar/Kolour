@@ -4,7 +4,6 @@ import club.maxstats.kolour.Kolour
 import club.maxstats.kolour.MinecraftScale
 import club.maxstats.kolour.util.Color
 import club.maxstats.kolour.render.drawQuad
-import club.maxstats.kolour.util.getScaledResolution
 //import net.minecraft.client.shader.Framebuffer
 import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.GL11.*
@@ -90,8 +89,8 @@ class BlurProgram: ShaderProgram() {
     fun render(
         x: Float = 0f,
         y: Float = 0f,
-        width: Float = getScaledResolution().scaledWidth_double.toFloat(),
-        height: Float = getScaledResolution().scaledHeight_double.toFloat(),
+        width: Float = 0f,
+        height: Float = 0f,
         topLeftRadius: Float,
         topRightRadius: Float,
         bottomLeftRadius: Float,

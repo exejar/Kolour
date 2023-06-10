@@ -1,7 +1,6 @@
 package club.maxstats.kolour
 
 import club.maxstats.kolour.gui.*
-import club.maxstats.kolour.render.FontManager
 import club.maxstats.kolour.util.Color
 import org.lwjgl.LWJGLException
 import org.lwjgl.input.Mouse
@@ -9,7 +8,6 @@ import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.DisplayMode
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.PixelFormat
-import java.lang.reflect.Field
 import kotlin.math.abs
 
 private const val width = 1500

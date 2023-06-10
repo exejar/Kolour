@@ -1,6 +1,5 @@
 package club.maxstats.kolour.util
 
-import net.minecraft.client.Minecraft
 import kotlin.math.abs
 
 fun now() = System.currentTimeMillis()

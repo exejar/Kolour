@@ -1,6 +1,5 @@
 plugins {
     kotlin("jvm") version "1.8.21"
-    id("com.github.weave-mc.weave-gradle") version "649dba7468"
     application
 }
 
@@ -14,11 +13,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.github.weave-mc:weave-loader:70bd82faa6")
-    compileOnly("org.spongepowered:mixin:0.8.5")
+    implementation("org.lwjgl.lwjgl:lwjgl:2.9.3")
 }
-
-minecraft.version("1.8.9")
 
 kotlin {
     jvmToolchain(11)
