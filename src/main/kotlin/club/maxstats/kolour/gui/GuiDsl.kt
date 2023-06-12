@@ -97,7 +97,7 @@ sealed class GuiBuilder {
         }
 
         /* Check to see if component should be rendered */
-        if (color.alpha > 0 && width.value > 0 && height.value > 0) {
+        if (color.alpha > 0 && compWidth > 0 && compHeight > 0) {
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -146,6 +146,15 @@ sealed class GuiBuilder {
     fun update(mouseX: Int, mouseY: Int, compPosition: ComputedPosition = ComputedPosition(0f, 0f, 0f, 0f)) {
         fontRenderer = fontManager.getFontRenderer(fontSize)
 
+        // If width/height hasn't been set or is set as 0, don't attempt to wrap the text (obviously)
+        // Instead set the width/height equal to the width/height of the text being rendered
+        if (text.isNotEmpty()) {
+            if (compWidth == 0f)
+                width = fontRenderer.getWidth(text, fontRenderer.getFontFromStyle(fontStyle)).px
+            if (compHeight == 0f)
+                height = fontRenderer.getHeight(text, fontRenderer.getFontFromStyle(fontStyle)).px
+        }
+
         var compPos = compPosition
         // compute position based on minecraft's resolution
         if (rootContainer == this)
@@ -155,11 +164,6 @@ sealed class GuiBuilder {
         compY = compPos.y
         compWidth = compPos.width
         compHeight = compPos.height
-
-        // If width hasn't been set or is set as 0, don't attempt to wrap the text (obviously)
-        // Instead set the computed width equal to the width of the text being rendered
-        if (compWidth == 0f && text.isNotEmpty())
-            compWidth = fontRenderer.getWidth(text, fontRenderer.getFontFromStyle(fontStyle))
 
         // align and update children
         if (children.isNotEmpty())
