@@ -65,7 +65,7 @@ sealed class GuiBuilder {
         return component
     }
     fun component(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
-    fun header(init: GuiComponent.() -> Unit) = init(GuiComponent().apply { fontStyle = FontStyle.BOLD; fontSize = rootContainer.fontSize * 2 }, init)
+    fun header(init: GuiComponent.() -> Unit) = init(GuiComponent(), init).apply { fontStyle = FontStyle.BOLD; fontSize = rootContainer.fontSize * 2 }
     fun paragraph(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
 
     fun onRender(action: () -> Unit) {
@@ -156,6 +156,11 @@ sealed class GuiBuilder {
         compWidth = compPos.width
         compHeight = compPos.height
 
+        // If width hasn't been set or is set as 0, don't attempt to wrap the text (obviously)
+        // Instead set the computed width equal to the width of the text being rendered
+        if (compWidth == 0f && text.isNotEmpty())
+            compWidth = fontRenderer.getWidth(text, fontRenderer.getFontFromStyle(fontStyle))
+
         // align and update children
         if (children.isNotEmpty())
             alignChildren(children, alignContent, alignItems, direction, mouseX, mouseY)
@@ -193,45 +198,4 @@ fun gui(init: GuiScreen.() -> Unit): GuiScreen {
     val gui = GuiScreen()
     gui.init()
     return gui
-}
-
-fun example() {
-    gui {
-        width = 30.rem
-        height = 30.rem
-
-        backgroundColor = Color.white
-        blur = 1.125.rem
-        borderRadius = Radius(10.px)
-
-        direction = AlignDirection.COLUMN
-        alignContent = ContentAlignment.BETWEEN
-
-        component {
-            text = "Click Me!"
-            width = 10.rem
-            height = 10.rem
-
-            backgroundColor = Color(0, 150, 0, 255)
-            borderRadius.topLeft = 10.px
-            borderRadius.topRight = 10.px
-
-            onClick {
-                text = "You Rule!"
-            }
-        }
-        component {
-            text = "Don't Click Me!"
-            width = 10.rem
-            height = 10.rem
-
-            backgroundColor = Color(150, 0, 0, 255)
-            borderRadius.bottomLeft = 10.px
-            borderRadius.bottomRight = 10.px
-
-            onClick {
-                text = "You Suck!"
-            }
-        }
-    }
 }
