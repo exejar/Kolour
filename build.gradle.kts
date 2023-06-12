@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.8.21"
+    id("com.github.weave-mc.weave-gradle") version "649dba7468"
     `maven-publish`
 }
 
@@ -19,6 +20,8 @@ dependencies {
 kotlin {
     jvmToolchain(8)
 }
+
+minecraft.version("1.8.9")
 
 publishing {
     publications {

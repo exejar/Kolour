@@ -8,6 +8,7 @@ import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.DisplayMode
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.PixelFormat
+import java.net.URLClassLoader
 import kotlin.math.abs
 
 private const val width = 1500
@@ -57,7 +58,7 @@ fun main() {
         gui.update(mouseX, mouseY)
         gui.render(mouseX, mouseY)
     }
-
+    
     Display.destroy()
 }
 
@@ -82,8 +83,8 @@ private fun createGui(): GuiBuilder {
         component {
             position = Position.RELATIVE
             text = "Component Two"
-            alignItems = ItemAlignment.MIDDLE
-            alignContent = ContentAlignment.MIDDLE
+            alignItems = ItemAlignment.START
+            alignContent = ContentAlignment.AROUND
             backgroundColor = Color(0, 150, 150, 255)
             width = 20.rem
             height = 20.rem
@@ -91,7 +92,14 @@ private fun createGui(): GuiBuilder {
             borderRadius = Radius(10.px)
 
             component {
-                backgroundColor = Color(0, 0, 0, 255)
+                text = "Child Component"
+                backgroundColor = Color(255, 0, 0, 255)
+                width = 5.rem
+                height = 5.rem
+            }
+            component {
+                text = "Child Component 2"
+                backgroundColor = Color(255, 0, 0, 255)
                 width = 5.rem
                 height = 5.rem
             }
