@@ -115,9 +115,6 @@ class FontRenderer(
         color: Int,
         style: FontStyle = FontStyle.PLAIN
     ) {
-        glEnable(GL_ALPHA)
-        glDisable(GL_BLEND)
-
         renderString(getFontFromStyle(style), text, x, y, color)
     }
 
