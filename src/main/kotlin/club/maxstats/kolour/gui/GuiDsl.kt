@@ -5,6 +5,8 @@ import club.maxstats.kolour.render.*
 import club.maxstats.kolour.util.Color
 import club.maxstats.kolour.util.getScaledResolution
 import org.lwjgl.opengl.Display
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.*
 
 class GuiScreen: GuiBuilder() {
     init {
@@ -96,6 +98,9 @@ sealed class GuiBuilder {
 
         /* Check to see if component should be rendered */
         if (color.alpha > 0 && width.value > 0 && height.value > 0) {
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
             drawRectangle(
                 compX,
                 compY,
@@ -107,6 +112,8 @@ sealed class GuiBuilder {
                 borderRadius.bottomRight.convert(),
                 backgroundColor
             )
+
+            glDisable(GL_BLEND)
         }
 
         /* Check to see if text should be rendered */
