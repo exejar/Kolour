@@ -14,8 +14,17 @@ class GuiScreen: GuiBuilder() {
         parent = this
     }
 }
-open class GuiComponent: GuiBuilder()
+open class GuiComponent(
+    inline var formatting: GuiComponent.() -> Unit
+): GuiBuilder() {
+    fun modify(init: GuiComponent.() -> Unit): GuiComponent {
+        this.init()
+        this.formatting = init
+        return this
+    }
+}
 sealed class GuiBuilder {
+    var id: String = ""
     var position: Position = Position.STATIC
     var top: MeasurementUnit? = null
     var right: MeasurementUnit? = null
@@ -53,20 +62,9 @@ sealed class GuiBuilder {
     internal var compHeight: Float = 0f
 
     protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(fontSize)
-    protected val children = arrayListOf<GuiComponent>()
+    internal val children = arrayListOf<GuiComponent>()
     internal lateinit var rootContainer: GuiScreen
     internal lateinit var parent: GuiBuilder
-
-    protected fun <T: GuiComponent>init(component: T, init: T.() -> Unit): T {
-        component.rootContainer = this.rootContainer
-        component.parent = this
-        component.init()
-        children.add(component)
-        return component
-    }
-    fun component(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
-    fun header(init: GuiComponent.() -> Unit) = init(GuiComponent(), init).apply { fontStyle = FontStyle.BOLD; fontSize = rootContainer.fontSize * 2 }
-    fun paragraph(init: GuiComponent.() -> Unit) = init(GuiComponent(), init)
 
     fun onRender(action: () -> Unit) {
         onRender = action
@@ -191,10 +189,31 @@ sealed class GuiBuilder {
         return when (this) {
             is EmUnit -> this.toPixels(fontSize)
             is RemUnit -> this.toPixels(rootContainer.fontSize)
-            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
-            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
+//            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
+//            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
             is PixelUnit -> this.pixel
+            is ViewportHeightUnit -> this.toPixels(Display.getHeight().toFloat())
+            is ViewportWidthUnit -> this.toPixels(Display.getWidth().toFloat())
         }
+    }
+
+    protected fun init(component: GuiComponent): GuiComponent {
+        component.rootContainer = this.rootContainer
+        component.parent = this
+        component.formatting(component)
+        children += component
+        return component
+    }
+    fun component(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init))
+    fun header(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init)).apply { fontStyle = FontStyle.BOLD; fontSize = rootContainer.fontSize * 2 }
+    fun paragraph(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init))
+    operator fun GuiComponent.unaryPlus(): GuiComponent {
+        val component = GuiComponent(this.formatting)
+        this@GuiBuilder.init(component)
+        return component
+    }
+    fun getComponentById(id: String, container: GuiBuilder = this) {
+        container.children.find { it.id === id }
     }
 }
 
@@ -202,4 +221,9 @@ fun gui(init: GuiScreen.() -> Unit): GuiScreen {
     val gui = GuiScreen()
     gui.init()
     return gui
+}
+fun component(init: GuiComponent.() -> Unit): GuiComponent {
+    val component = GuiComponent(init)
+    component.formatting(component)
+    return component
 }
