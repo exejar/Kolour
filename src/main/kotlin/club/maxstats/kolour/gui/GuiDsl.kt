@@ -190,11 +190,11 @@ sealed class GuiBuilder {
         return when (this) {
             is EmUnit -> this.toPixels(fontSize)
             is RemUnit -> this.toPixels(rootContainer.fontSize)
-//            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
-//            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
+            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
+            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
             is PixelUnit -> this.pixel
-            is ViewportHeightUnit -> this.toPixels(Display.getHeight().toFloat())
-            is ViewportWidthUnit -> this.toPixels(Display.getWidth().toFloat())
+//            is ViewportHeightUnit -> this.toPixels(Display.getHeight().toFloat())
+//            is ViewportWidthUnit -> this.toPixels(Display.getWidth().toFloat())
         }
     }
 
