@@ -170,20 +170,20 @@ sealed class GuiBuilder {
 
         onUpdate?.invoke()
     }
-    internal fun click(mouseX: Int, mouseY: Int, mouseButton: Int) {
+    fun click(mouseX: Int, mouseY: Int, mouseButton: Int) {
         if (isHovering(mouseX, mouseY))
             onClick?.invoke()
 
         children.forEach { it.click(mouseX, mouseY, mouseButton) }
     }
-    internal fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
+    fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
         if (isHovering(mouseX, mouseY))
             onScroll?.invoke()
 
         children.forEach { it.scroll(mouseX, mouseY, scroll) }
     }
 
-    internal fun isHovering(mouseX: Int, mouseY: Int): Boolean {
+    protected fun isHovering(mouseX: Int, mouseY: Int): Boolean {
         return mouseX.toFloat() in compX..(compX + compWidth) && mouseY.toFloat() in compY..(compY + compHeight)
     }
     internal fun MeasurementUnit.convert(): Float {
