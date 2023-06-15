@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.*
 
 class GuiScreen: GuiBuilder() {
+    val componentList = arrayListOf<GuiBuilder>()
     init {
         rootContainer = this
         parent = this
@@ -201,6 +202,7 @@ sealed class GuiBuilder {
         component.rootContainer = this.rootContainer
         component.parent = this
         component.formatting(component)
+        rootContainer.componentList += component
         children += component
         return component
     }
@@ -212,14 +214,13 @@ sealed class GuiBuilder {
         this@GuiBuilder.init(component)
         return component
     }
-    fun getComponentById(id: String, container: GuiBuilder = this) {
-        container.children.find { it.id === id }
-    }
+    fun getComponentById(id: String): GuiBuilder? = rootContainer.componentList.find { it.id === id }
 }
 
 fun gui(init: GuiScreen.() -> Unit): GuiScreen {
     val gui = GuiScreen()
     gui.init()
+    gui.componentList += gui
     return gui
 }
 fun component(init: GuiComponent.() -> Unit): GuiComponent {
