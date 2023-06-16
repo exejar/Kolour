@@ -207,7 +207,7 @@ sealed class GuiBuilder {
         return component
     }
     fun component(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init))
-    fun header(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init)).apply { fontStyle = FontStyle.BOLD; fontSize = rootContainer.fontSize * 2 }
+    fun header(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init)).apply { fontStyle = FontStyle.BOLD; fontSize = 24 }
     fun paragraph(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init))
     operator fun GuiComponent.unaryPlus(): GuiComponent {
         val component = GuiComponent(this.formatting)
