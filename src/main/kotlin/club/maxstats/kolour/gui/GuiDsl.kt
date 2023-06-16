@@ -51,32 +51,34 @@ sealed class GuiBuilder {
     var borderRadius: Radius<MeasurementUnit> = Radius(0.px)
     var backgroundColor: Color = Color.none
 
-    protected var onScroll: (() -> Unit)? = null
-    protected var onClick: (() -> Unit)? = null
-    protected var onUpdate: (() -> Unit)? = null
-    protected var onRender: (() -> Unit)? = null
-
     /* Computed coordinates in pixels meant to be used for rendering the component */
     internal var compX: Float = 0f
     internal var compY: Float = 0f
     internal var compWidth: Float = 0f
     internal var compHeight: Float = 0f
+    protected var mouseX: Float = 0f
+    protected var mouseY: Float = 0f
 
     protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(fontSize)
     internal val children = arrayListOf<GuiComponent>()
     internal lateinit var rootContainer: GuiScreen
     internal lateinit var parent: GuiBuilder
 
-    fun onRender(action: () -> Unit) {
+    protected var onScroll: GuiEvent.() -> Unit = {}
+    protected var onClick: GuiEvent.() -> Unit = {}
+    protected var onUpdate: GuiEvent.() -> Unit = {}
+    protected var onRender: GuiEvent.() -> Unit = {}
+
+    fun onRender(action: GuiEvent.() -> Unit) {
         onRender = action
     }
-    fun onUpdate(action: () -> Unit) {
+    fun onUpdate(action: GuiEvent.() -> Unit) {
         onUpdate = action
     }
-    fun onClick(action: () -> Unit) {
+    fun onClick(action: GuiEvent.() -> Unit) {
         onClick = action
     }
-    fun onScroll(action: () -> Unit) {
+    fun onScroll(action: GuiEvent.() -> Unit) {
         onScroll = action
     }
     fun render(mouseX: Int, mouseY: Int) {
@@ -138,7 +140,22 @@ sealed class GuiBuilder {
             }
         }
 
-        onRender?.invoke()
+        // apply translation to onRender so that immediate mode rendering is done within the component
+        glPushMatrix()
+        glTranslatef(
+            compX,
+            compY,
+            0f
+        )
+        GuiEvent(
+            compX,
+            compY,
+            compWidth,
+            compHeight,
+            mouseX,
+            mouseY
+        ).onRender()
+        glPopMatrix()
 
         children.forEach { it.render(mouseX, mouseY) }
     }
@@ -168,17 +185,38 @@ sealed class GuiBuilder {
         if (children.isNotEmpty())
             alignChildren(children, alignContent, alignItems, direction, mouseX, mouseY)
 
-        onUpdate?.invoke()
+        GuiEvent(
+            compX,
+            compY,
+            compWidth,
+            compHeight,
+            mouseX,
+            mouseY
+        ).onUpdate()
     }
     fun click(mouseX: Int, mouseY: Int, mouseButton: Int) {
         if (isHovering(mouseX, mouseY))
-            onClick?.invoke()
+            GuiEvent(
+                compX,
+                compY,
+                compWidth,
+                compHeight,
+                mouseX,
+                mouseY
+            ).onClick()
 
         children.forEach { it.click(mouseX, mouseY, mouseButton) }
     }
     fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
         if (isHovering(mouseX, mouseY))
-            onScroll?.invoke()
+            GuiEvent(
+                compX,
+                compY,
+                compWidth,
+                compHeight,
+                mouseX,
+                mouseY
+            ).onScroll()
 
         children.forEach { it.scroll(mouseX, mouseY, scroll) }
     }
@@ -216,6 +254,15 @@ sealed class GuiBuilder {
     }
     fun getComponentById(id: String): GuiBuilder? = rootContainer.componentList.find { it.id === id }
 }
+
+data class GuiEvent(
+    val x: Float,
+    val y: Float,
+    val width: Float,
+    val height: Float,
+    val mouseX: Int,
+    val mouseY: Int
+)
 
 fun gui(init: GuiScreen.() -> Unit): GuiScreen {
     val gui = GuiScreen()
