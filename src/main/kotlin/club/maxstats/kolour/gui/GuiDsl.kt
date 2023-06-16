@@ -41,7 +41,7 @@ sealed class GuiBuilder {
     var text: String = ""
     var fontStyle: FontStyle = FontStyle.PLAIN
     var lineSpacing: MeasurementUnit = 0.px
-    var wrapText: Boolean = true
+    var wrapText: Boolean = false
 
     var direction: AlignDirection = AlignDirection.ROW
     var alignContent: ContentAlignment = ContentAlignment.START
