@@ -3,10 +3,10 @@ package club.maxstats.kolour.util
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.ScaledResolution
 
-val mc = Minecraft.getMinecraft()
-fun getScaledResolution(): ScaledResolution = ScaledResolution(mc)
+internal val mc = Minecraft.getMinecraft()
+internal fun getScaledResolution(): ScaledResolution = ScaledResolution(mc)
 
-fun calculateScaleFactor(mc: Minecraft): Int {
+internal fun calculateScaleFactor(mc: Minecraft): Int {
     val displayWidth = mc.displayWidth
     val displayHeight = mc.displayHeight
 
