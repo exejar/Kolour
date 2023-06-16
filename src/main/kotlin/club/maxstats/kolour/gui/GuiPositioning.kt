@@ -73,6 +73,7 @@ private fun ArrayList<GuiComponent>.alignContent(
     var currentY = startY
 
     for (child in this) {
+
         child.run {
             var computedX = margin.left.convert()
             var computedY = margin.top.convert()
@@ -304,16 +305,16 @@ private fun contentAround(children: ArrayList<GuiComponent>, direction: AlignDir
 
     val combinedLength = children.combinedLength()
     val contentSpacer = if (direction == AlignDirection.ROW)
-        (ancestorWidth - combinedLength.first) / (children.size)
+        (ancestorWidth - combinedLength.first) / (children.size + 1)
     else
-        (ancestorHeight - combinedLength.second) / (children.size)
+        (ancestorHeight - combinedLength.second) / (children.size + 1)
 
     children.alignContent(
         direction,
         alignItems,
         positionedAncestor,
-        ancestorX + contentSpacer / 2,
-        ancestorY + contentSpacer / 2,
+        ancestorX + contentSpacer,
+        ancestorY + contentSpacer,
         contentSpacer,
         mouseX,
         mouseY
@@ -332,6 +333,7 @@ fun GuiBuilder.findPositionedAncestor(): GuiBuilder {
 fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
     var contentWidth = 0f
     var contentHeight = 0f
+    var longest = 0f
 
     // compute full size of all children
     for (child in this) {
@@ -346,20 +348,36 @@ fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
             /* Called after the child's x, y, width, and height and component's alignment are computed */
             when (child.position) {
                 Position.STATIC -> {     // Position according to the normal flow of GUI
-                    alignFlow = if (direction == AlignDirection.ROW)
-                        computedX + computedWidth + margin.right.convert()
-                    else
-                        computedY + computedHeight + margin.bottom.convert()
+                    val length: Float
+
+                    if (parent.direction == AlignDirection.ROW) {
+                        length = margin.left.convert() + computedWidth + margin.right.convert()
+                        alignFlow = computedX + length
+                    } else {
+                        length = margin.top.convert() + computedHeight + margin.bottom.convert()
+                        alignFlow = computedY + length
+                    }
+
+                    if (longest < length)
+                        longest = length
 
                     computedX += contentWidth
                     computedY += contentHeight
                 }
 
                 Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
-                    alignFlow = if (direction == AlignDirection.ROW)
-                        computedX + computedWidth + margin.right.convert()
-                    else
-                        computedY + computedHeight + margin.bottom.convert()
+                    val length: Float
+
+                    if (parent.direction == AlignDirection.ROW) {
+                        length = margin.left.convert() + computedWidth + margin.right.convert()
+                        alignFlow = computedX + length
+                    } else {
+                        length = margin.top.convert() + computedHeight + margin.bottom.convert()
+                        alignFlow = computedY + length
+                    }
+
+                    if (longest < length)
+                        longest = length
 
                     computedX += contentWidth + (left?.convert() ?: 0f) - (right?.convert() ?: 0f)
                     computedY += contentHeight + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f)
@@ -370,10 +388,13 @@ fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
                 }
             }
 
-            if (direction == AlignDirection.ROW)
+            if (parent.direction === AlignDirection.ROW) {
                 contentWidth += alignFlow
-            else
+                contentHeight = longest
+            } else {
                 contentHeight += alignFlow
+                contentWidth = longest
+            }
         }
     }
 
