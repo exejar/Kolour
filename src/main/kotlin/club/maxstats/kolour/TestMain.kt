@@ -1,7 +1,9 @@
 package club.maxstats.kolour
 
 import club.maxstats.kolour.gui.*
+import club.maxstats.kolour.render.FontStyle
 import club.maxstats.kolour.util.Color
+import net.minecraft.client.Minecraft
 import org.lwjgl.LWJGLException
 import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.Display
@@ -63,45 +65,139 @@ fun main() {
 }
 
 private fun createGui(): GuiBuilder {
-    return gui {
-        position = Position.FIXED
-        alignItems = ItemAlignment.MIDDLE
-        alignContent = ContentAlignment.START
-        width = 100.vw
-        height = 100.vh
-//        padding = Sides(0.px, 2.rem, 0.px, 0.px)
-        backgroundColor = Color(0, 0, 0, 50)
-        blur = 18.px
-
+    val configCategory =
         component {
-            text = "Component One"
-            backgroundColor = Color(150, 0, 150, 255)
-            width = 10.rem
-            height = 10.rem
-            borderRadius = Radius(10.px)
-        }
-        component {
-            position = Position.RELATIVE
-            text = "Component Two"
-            alignItems = ItemAlignment.START
-            alignContent = ContentAlignment.AROUND
-            backgroundColor = Color(0, 150, 150, 255)
-            width = 20.rem
-            height = 20.rem
-//            margin.left = 10.rem
-            borderRadius = Radius(10.px)
+            style {
+                text = "test"
+                position = Position.RELATIVE
+                alignItems = ItemAlignment.MIDDLE
+                alignContent = ContentAlignment.MIDDLE
 
-            component {
-                text = "Child Component"
-                backgroundColor = Color(255, 0, 0, 255)
                 width = 5.rem
                 height = 5.rem
+//                margin = Sides(1.rem, 0.px, 1.rem, 0.px)
+
+                backgroundColor = Color(60, 60, 60, 255)
+                borderRadius = Radius(10.px)
+            }
+
+            component {
+                id = "child-in-reusable"
+
+                style {
+                    width = 3.rem
+                    height = 3.rem
+
+                    text = "Shit"
+
+                    backgroundColor = Color(0, 0, 255, 255)
+                }
+            }
+        }
+
+    return gui {
+        id = "main-screen"
+
+        style {
+            position = Position.FIXED
+            alignItems = ItemAlignment.MIDDLE
+            alignContent = ContentAlignment.MIDDLE
+
+            width = 100.vw
+            height = 100.vh
+
+            backgroundColor = Color(25, 25, 25, 100)
+            blur = 18.px
+        }
+
+        component {
+            id = "content"
+
+            style {
+                position = Position.ABSOLUTE
+                top = 100.vh
+                width = 100.vw
+                height = 1.rem
+            }
+
+            component {
+                id = "left-panel"
+
+                style {
+                    backgroundColor = Color(50, 0, 0, 255)
+                    position = Position.RELATIVE
+                    direction = AlignDirection.COLUMN
+                    alignItems = ItemAlignment.MIDDLE
+                    alignContent = ContentAlignment.MIDDLE
+
+                    width = 60.vw
+                    height = 100.vh
+                }
+
+                component {
+                    id = "stat-container"
+
+                    style {
+                        position = Position.RELATIVE
+                        alignItems = ItemAlignment.MIDDLE
+                        alignContent = ContentAlignment.MIDDLE
+
+                        width = 60.vw
+                        height = 50.vh
+                    }
+
+
+                    component {
+                        id = "player-container"
+
+                        style {
+                            alignItems = ItemAlignment.MIDDLE
+                            alignContent = ContentAlignment.MIDDLE
+                            width = 5.rem
+                            height = 8.rem
+                            backgroundColor = Color(45, 45, 45, 255)
+                            borderRadius = Radius(6.px)
+                        }
+
+//                        onRender {
+//                            // render player model using minecraft's method
+//                            val scale = 40
+//                            renderPlayerModel(
+//                                Minecraft.getMinecraft().thePlayer,
+//                                (width / 2),
+//                                (height / 2) + (scale - 5),
+//                                0f,
+//                                0f,
+//                                scale
+//                            )
+//                        }
+                    }
+                }
             }
             component {
-                text = "Child Component 2"
-                backgroundColor = Color(255, 0, 0, 255)
-                width = 5.rem
-                height = 5.rem
+                id = "right-panel"
+
+                style {
+                    backgroundColor = Color(50, 50, 0, 255)
+                    position = Position.RELATIVE
+                    direction = AlignDirection.COLUMN
+                    alignItems = ItemAlignment.MIDDLE
+                    alignContent = ContentAlignment.MIDDLE
+                    height = 100.vh
+                    width = 40.vw
+                }
+
+
+                header {
+                    style {
+                        fontStyle = FontStyle.BOLD
+                        text = "Seraph Settings"
+                        margin.bottom = 4.rem
+                    }
+                }
+                +configCategory
+                +configCategory
+                +configCategory
             }
         }
     }
