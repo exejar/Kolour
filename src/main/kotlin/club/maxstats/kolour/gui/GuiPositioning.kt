@@ -4,7 +4,7 @@ package club.maxstats.kolour.gui
  *
  */
 fun alignChildren(
-    children: ArrayList<GuiComponent>,
+    children: ArrayList<AbstractComponent>,
     alignContent: ContentAlignment,
     alignItems: ItemAlignment,
     direction: AlignDirection,
@@ -21,11 +21,11 @@ fun alignChildren(
 }
 
 // Root container will always be positioned as if it's static and in a column.
-internal fun GuiScreen.computeRootPosition(): ComputedPosition {
-    val compX = margin.left.convert()
-    val compY = margin.top.convert()
-    val compWidth = width.convert()
-    val compHeight = height.convert()
+internal fun AbstractComponent.computeRootPosition(): ComputedPosition {
+    val compX = style.margin.left.convert()
+    val compY = style.margin.top.convert()
+    val compWidth = style.width.convert()
+    val compHeight = style.height.convert()
 
     return ComputedPosition(compX, compY, compWidth, compHeight)
 }
@@ -33,14 +33,14 @@ internal fun GuiScreen.computeRootPosition(): ComputedPosition {
 /**
  * @return computed content position for child
  */
-private fun GuiComponent.alignItems(alignment: ItemAlignment, direction: AlignDirection, computedPosition: ComputedPosition) {
+private fun AbstractComponent.alignItems(alignment: ItemAlignment, direction: AlignDirection, computedPosition: ComputedPosition) {
     val positionedAncestor = findPositionedAncestor()
     when (alignment) {
         ItemAlignment.MIDDLE -> {
             if (direction == AlignDirection.COLUMN)
-                computedPosition.x = positionedAncestor.padding.left.convert() + (positionedAncestor.compWidth / 2) - (computedPosition.width / 2) - positionedAncestor.padding.right.convert()
+                computedPosition.x = positionedAncestor.style.padding.left.convert() + (positionedAncestor.compWidth / 2) - (computedPosition.width / 2) - positionedAncestor.style.padding.right.convert()
             else
-                computedPosition.y = positionedAncestor.padding.top.convert() + (positionedAncestor.compHeight / 2) - (computedPosition.height / 2) - positionedAncestor.padding.bottom.convert()
+                computedPosition.y = positionedAncestor.style.padding.top.convert() + (positionedAncestor.compHeight / 2) - (computedPosition.height / 2) - positionedAncestor.style.padding.bottom.convert()
         }
         ItemAlignment.END -> {
             if (direction == AlignDirection.COLUMN)
@@ -54,7 +54,7 @@ private fun GuiComponent.alignItems(alignment: ItemAlignment, direction: AlignDi
     }
 }
 
-private fun ArrayList<GuiComponent>.alignContent(
+private fun ArrayList<AbstractComponent>.alignContent(
     direction: AlignDirection,
     alignItems: ItemAlignment,
     ancestor: GuiBuilder,
@@ -75,10 +75,10 @@ private fun ArrayList<GuiComponent>.alignContent(
     for (child in this) {
 
         child.run {
-            var computedX = margin.left.convert()
-            var computedY = margin.top.convert()
-            var computedWidth = width.convert()
-            var computedHeight = height.convert()
+            var computedX = style.margin.left.convert()
+            var computedY = style.margin.top.convert()
+            var computedWidth = style.width.convert()
+            var computedHeight = style.height.convert()
 
             var computedPosition = ComputedPosition(
                 computedX,
@@ -89,7 +89,7 @@ private fun ArrayList<GuiComponent>.alignContent(
 
             // Align content before layout computation.
             // Content alignment should only be applied to non-fixed/absolute components
-            if (child.position != Position.FIXED && child.position != Position.ABSOLUTE) {
+            if (style.position != Position.FIXED && style.position != Position.ABSOLUTE) {
                 alignItems(
                     alignItems,
                     direction,
@@ -102,12 +102,12 @@ private fun ArrayList<GuiComponent>.alignContent(
             var alignFlow = alignSpacing
 
             /* Called after the child's x, y, width, and height and component's alignment are computed */
-            when (child.position) {
+            when (style.position) {
                 Position.STATIC -> {     // Position according to the normal flow of GUI
                     alignFlow += if (direction == AlignDirection.ROW)
-                        computedX + computedWidth + margin.right.convert()
+                        computedX + computedWidth + style.margin.right.convert()
                     else
-                        computedY + computedHeight + margin.bottom.convert()
+                        computedY + computedHeight + style.margin.bottom.convert()
 
                     computedX += currentX
                     computedY += currentY
@@ -115,45 +115,45 @@ private fun ArrayList<GuiComponent>.alignContent(
 
                 Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
                     alignFlow += if (direction == AlignDirection.ROW)
-                        computedX + computedWidth + margin.right.convert()
+                        computedX + computedWidth + style.margin.right.convert()
                     else
-                        computedY + computedHeight + margin.bottom.convert()
+                        computedY + computedHeight + style.margin.bottom.convert()
 
-                    computedX += currentX + (left?.convert() ?: 0f) - (right?.convert() ?: 0f)
-                    computedY += currentY + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f)
+                    computedX += currentX + (style.left?.convert() ?: 0f) - (style.right?.convert() ?: 0f)
+                    computedY += currentY + (style.top?.convert() ?: 0f) - (style.bottom?.convert() ?: 0f)
                 }
 
                 Position.ABSOLUTE -> {   // Position relative to nearest positioned ancestor (Instead of positioned relative to the viewport, like fixed positioning)
                     // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                    computedX = ancestorX + (left?.convert() ?: 0f)
-                    computedY = ancestorY + (top?.convert() ?: 0f)
+                    computedX = ancestorX + (style.left?.convert() ?: 0f)
+                    computedY = ancestorY + (style.top?.convert() ?: 0f)
 
                     if (computedWidth == 0f)
-                        computedWidth = ancestorWidth - (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert()
+                        computedWidth = ancestorWidth - (style.left?.convert() ?: 0f) - (style.right?.convert() ?: 0f) - style.margin.right.convert()
                     if (computedHeight == 0f)
-                        computedHeight = ancestorHeight - (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) - margin.bottom.convert()
+                        computedHeight = ancestorHeight - (style.top?.convert() ?: 0f) - (style.bottom?.convert() ?: 0f) - style.margin.bottom.convert()
 
                 }
 
                 Position.FIXED -> {      // Position relative to the viewport. Use top, right, bottom, and left properties to position the component
                     val root = child.rootContainer
                     // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                    computedX = root.compX + (left?.convert() ?: 0f)
-                    computedY = root.compY + (top?.convert() ?: 0f)
+                    computedX = root.compX + (style.left?.convert() ?: 0f)
+                    computedY = root.compY + (style.top?.convert() ?: 0f)
 
                     if (computedWidth == 0f)
-                        computedWidth = root.compWidth - (left?.convert() ?: 0f) - (right?.convert() ?: 0f) - margin.right.convert()
+                        computedWidth = root.compWidth - (style.left?.convert() ?: 0f) - (style.right?.convert() ?: 0f) - style.margin.right.convert()
                     if (computedHeight == 0f)
-                        computedHeight = root.compHeight - (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f) - margin.bottom.convert()
+                        computedHeight = root.compHeight - (style.top?.convert() ?: 0f) - (style.bottom?.convert() ?: 0f) - style.margin.bottom.convert()
                 }
             }
 
             ancestor.run {
                 // only apply padding to children that are outside the padded area
-                val ancestorMinX = compX + padding.left.convert()
-                val ancestorMinY = compY + padding.top.convert()
-                val ancestorMaxX = compX + compWidth - padding.right.convert()
-                val ancestorMaxY = compY + compHeight - padding.bottom.convert()
+                val ancestorMinX = compX + style.padding.left.convert()
+                val ancestorMinY = compY + style.padding.top.convert()
+                val ancestorMaxX = compX + compWidth - style.padding.right.convert()
+                val ancestorMaxY = compY + compHeight - style.padding.bottom.convert()
 
                 val leftRemainder = ancestorMinX - computedX
                 val topRemainder = ancestorMinY - computedY
@@ -187,7 +187,7 @@ private fun ArrayList<GuiComponent>.alignContent(
     }
 }
 
-private fun contentStart(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
+private fun contentStart(children: ArrayList<AbstractComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -203,7 +203,7 @@ private fun contentStart(children: ArrayList<GuiComponent>, direction: AlignDire
     )
 }
 
-private fun contentMiddle(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
+private fun contentMiddle(children: ArrayList<AbstractComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -235,7 +235,7 @@ private fun contentMiddle(children: ArrayList<GuiComponent>, direction: AlignDir
     )
 }
 
-private fun contentEnd(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
+private fun contentEnd(children: ArrayList<AbstractComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -267,7 +267,7 @@ private fun contentEnd(children: ArrayList<GuiComponent>, direction: AlignDirect
     )
 }
 
-private fun contentBetween(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
+private fun contentBetween(children: ArrayList<AbstractComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -294,7 +294,7 @@ private fun contentBetween(children: ArrayList<GuiComponent>, direction: AlignDi
     )
 }
 
-private fun contentAround(children: ArrayList<GuiComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
+private fun contentAround(children: ArrayList<AbstractComponent>, direction: AlignDirection, alignItems: ItemAlignment, mouseX: Int, mouseY: Int) {
     val currentComponent = children.first()
     val positionedAncestor = currentComponent.findPositionedAncestor()
 
@@ -324,13 +324,13 @@ private fun contentAround(children: ArrayList<GuiComponent>, direction: AlignDir
 fun GuiBuilder.findPositionedAncestor(): GuiBuilder {
     val parent = parent
 
-    if (parent.position != Position.STATIC || parent == rootContainer)
+    if (parent.style.position != Position.STATIC || parent == rootContainer)
         return parent
 
     return parent.findPositionedAncestor()
 }
 
-fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
+fun ArrayList<AbstractComponent>.combinedLength(): Pair<Float, Float> {
     var contentWidth = 0f
     var contentHeight = 0f
     var longest = 0f
@@ -338,23 +338,23 @@ fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
     // compute full size of all children
     for (child in this) {
         child.run {
-            var computedX = margin.left.convert()
-            var computedY = margin.top.convert()
-            val computedWidth = width.convert()
-            val computedHeight = height.convert()
+            var computedX = style.margin.left.convert()
+            var computedY = style.margin.top.convert()
+            val computedWidth = style.width.convert()
+            val computedHeight = style.height.convert()
 
             var alignFlow = 0f
 
             /* Called after the child's x, y, width, and height and component's alignment are computed */
-            when (child.position) {
+            when (child.style.position) {
                 Position.STATIC -> {     // Position according to the normal flow of GUI
                     val length: Float
 
-                    if (parent.direction == AlignDirection.ROW) {
-                        length = margin.left.convert() + computedWidth + margin.right.convert()
+                    if (parent.style.direction == AlignDirection.ROW) {
+                        length = style.margin.left.convert() + computedWidth + style.margin.right.convert()
                         alignFlow = computedX + length
                     } else {
-                        length = margin.top.convert() + computedHeight + margin.bottom.convert()
+                        length = style.margin.top.convert() + computedHeight + style.margin.bottom.convert()
                         alignFlow = computedY + length
                     }
 
@@ -368,19 +368,19 @@ fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
                 Position.RELATIVE -> {   // Position relative to its normal position, take into account of top, right, bottom, left (these values do not modify the flow of siblings)
                     val length: Float
 
-                    if (parent.direction == AlignDirection.ROW) {
-                        length = margin.left.convert() + computedWidth + margin.right.convert()
+                    if (parent.style.direction == AlignDirection.ROW) {
+                        length = style.margin.left.convert() + computedWidth + style.margin.right.convert()
                         alignFlow = computedX + length
                     } else {
-                        length = margin.top.convert() + computedHeight + margin.bottom.convert()
+                        length = style.margin.top.convert() + computedHeight + style.margin.bottom.convert()
                         alignFlow = computedY + length
                     }
 
                     if (longest < length)
                         longest = length
 
-                    computedX += contentWidth + (left?.convert() ?: 0f) - (right?.convert() ?: 0f)
-                    computedY += contentHeight + (top?.convert() ?: 0f) - (bottom?.convert() ?: 0f)
+                    computedX += contentWidth + (style.left?.convert() ?: 0f) - (style.right?.convert() ?: 0f)
+                    computedY += contentHeight + (style.top?.convert() ?: 0f) - (style.bottom?.convert() ?: 0f)
                 }
 
                 else -> {
@@ -388,7 +388,7 @@ fun ArrayList<GuiComponent>.combinedLength(): Pair<Float, Float> {
                 }
             }
 
-            if (parent.direction === AlignDirection.ROW) {
+            if (parent.style.direction === AlignDirection.ROW) {
                 contentWidth += alignFlow
                 contentHeight = longest
             } else {

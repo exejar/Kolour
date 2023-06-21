@@ -1,31 +1,13 @@
 package club.maxstats.kolour.gui
 
-import club.maxstats.kolour.Kolour
 import club.maxstats.kolour.render.*
 import club.maxstats.kolour.util.Color
-import club.maxstats.kolour.util.getScaledResolution
 import org.lwjgl.opengl.Display
-import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.*
 
-class GuiScreen: GuiBuilder() {
-    val componentList = arrayListOf<GuiBuilder>()
-    init {
-        rootContainer = this
-        parent = this
-    }
-}
-open class GuiComponent(
-    inline var formatting: GuiComponent.() -> Unit
-): GuiBuilder() {
-    fun modify(init: GuiComponent.() -> Unit): GuiComponent {
-        this.init()
-        this.formatting = init
-        return this
-    }
-}
-sealed class GuiBuilder {
-    var id: String = ""
+open class ComponentStyle(
+    inline protected var style: ComponentStyle.() -> Unit
+) {
     var position: Position = Position.STATIC
     var top: MeasurementUnit? = null
     var right: MeasurementUnit? = null
@@ -51,6 +33,51 @@ sealed class GuiBuilder {
     var borderRadius: Radius<MeasurementUnit> = Radius(0.px)
     var backgroundColor: Color = Color.none
 
+    init {
+        this.style()
+    }
+
+    fun modify(init: ComponentStyle.() -> Unit): ComponentStyle {
+        this.init()
+        this.style = init
+        return this
+    }
+
+    fun clear(): ComponentStyle {
+        this.style = {}
+        this.style()
+        return this
+    }
+
+    fun copy(): ComponentStyle {
+        val copy = ComponentStyle({})
+        copy.style()
+        return copy
+    }
+}
+
+open class AbstractComponent: GuiBuilder()
+
+class GuiComponent: AbstractComponent() {
+    val componentList = arrayListOf<GuiBuilder>()
+
+    init {
+        parent = this
+        rootContainer = this
+    }
+}
+
+class ReusableComponent(
+    val formatting: ReusableComponent.() -> Unit
+): AbstractComponent()
+
+sealed class GuiBuilder {
+    var style: ComponentStyle = ComponentStyle {}
+    var id: String = ""
+    internal val children = arrayListOf<AbstractComponent>()
+    internal lateinit var parent: GuiBuilder
+    internal lateinit var rootContainer: GuiComponent
+
     /* Computed coordinates in pixels meant to be used for rendering the component */
     internal var compX: Float = 0f
     internal var compY: Float = 0f
@@ -59,15 +86,12 @@ sealed class GuiBuilder {
     protected var mouseX: Float = 0f
     protected var mouseY: Float = 0f
 
-    protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(fontSize)
-    internal val children = arrayListOf<GuiComponent>()
-    internal lateinit var rootContainer: GuiScreen
-    internal lateinit var parent: GuiBuilder
+    protected var fontRenderer: FontRenderer = fontManager.getFontRenderer(style.fontSize)
 
-    protected var onScroll: GuiEvent.() -> Unit = {}
-    protected var onClick: GuiEvent.() -> Unit = {}
-    protected var onUpdate: GuiEvent.() -> Unit = {}
-    protected var onRender: GuiEvent.() -> Unit = {}
+    var onScroll: GuiEvent.() -> Unit = {}
+    var onClick: GuiEvent.() -> Unit = {}
+    var onUpdate: GuiEvent.() -> Unit = {}
+    var onRender: GuiEvent.() -> Unit = {}
 
     fun onRender(action: GuiEvent.() -> Unit) {
         onRender = action
@@ -81,24 +105,25 @@ sealed class GuiBuilder {
     fun onScroll(action: GuiEvent.() -> Unit) {
         onScroll = action
     }
+
     fun render(mouseX: Int, mouseY: Int) {
         /* Check to see if blur should be applied */
-        if (blur.value > 0) {
+        if (style.blur.value > 0) {
             drawBlur(
                 compX,
                 compY,
                 compWidth,
                 compHeight,
-                borderRadius.topLeft.convert(),
-                borderRadius.topRight.convert(),
-                borderRadius.bottomLeft.convert(),
-                borderRadius.bottomRight.convert(),
-                blur.convert()
+                style.borderRadius.topLeft.convert(),
+                style.borderRadius.topRight.convert(),
+                style.borderRadius.bottomLeft.convert(),
+                style.borderRadius.bottomRight.convert(),
+                style.blur.convert()
             )
         }
 
         /* Check to see if component should be rendered */
-        if (color.alpha > 0 && compWidth > 0 && compHeight > 0) {
+        if (style.color.alpha > 0 && compWidth > 0 && compHeight > 0) {
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -107,35 +132,35 @@ sealed class GuiBuilder {
                 compY,
                 compWidth,
                 compHeight,
-                borderRadius.topLeft.convert(),
-                borderRadius.topRight.convert(),
-                borderRadius.bottomLeft.convert(),
-                borderRadius.bottomRight.convert(),
-                backgroundColor
+                style.borderRadius.topLeft.convert(),
+                style.borderRadius.topRight.convert(),
+                style.borderRadius.bottomLeft.convert(),
+                style.borderRadius.bottomRight.convert(),
+                style.backgroundColor
             )
 
             glDisable(GL_BLEND)
         }
 
         /* Check to see if text should be rendered */
-        if (text.isNotEmpty()) {
-            if (wrapText) {
+        if (style.text.isNotEmpty()) {
+            if (style.wrapText) {
                 fontRenderer.drawWrappedString(
-                    text,
+                    style.text,
                     compX,
                     compY,
                     compWidth,
-                    lineSpacing.convert(),
-                    color.toRGBA(),
-                    fontStyle
+                    style.lineSpacing.convert(),
+                    style.color.toRGBA(),
+                    style.fontStyle
                 )
             } else {
                 fontRenderer.drawString(
-                    text,
+                    style.text,
                     compX,
                     compY,
-                    color.toRGBA(),
-                    fontStyle
+                    style.color.toRGBA(),
+                    style.fontStyle
                 )
             }
         }
@@ -147,6 +172,7 @@ sealed class GuiBuilder {
             compY,
             0f
         )
+
         GuiEvent(
             compX,
             compY,
@@ -155,24 +181,15 @@ sealed class GuiBuilder {
             mouseX,
             mouseY
         ).onRender()
-        glPopMatrix()
 
+        glPopMatrix()
         children.forEach { it.render(mouseX, mouseY) }
     }
     fun update(mouseX: Int, mouseY: Int, compPosition: ComputedPosition = ComputedPosition(0f, 0f, 0f, 0f)) {
-        fontRenderer = fontManager.getFontRenderer(fontSize)
-
-        // If width/height hasn't been set or is set as 0, don't attempt to wrap the text (obviously)
-        // Instead set the width/height equal to the width/height of the text being rendered
-        if (text.isNotEmpty()) {
-            if (compWidth == 0f)
-                width = fontRenderer.getWidth(text, fontRenderer.getFontFromStyle(fontStyle)).px
-            if (compHeight == 0f)
-                height = fontRenderer.getHeight(text, fontRenderer.getFontFromStyle(fontStyle)).px
-        }
+        fontRenderer = fontManager.getFontRenderer(style.fontSize)
 
         var compPos = compPosition
-        // compute position based on minecraft's resolution
+        // compute position based on minecraft's
         if (rootContainer == this)
             compPos = this.computeRootPosition()
 
@@ -181,9 +198,18 @@ sealed class GuiBuilder {
         compWidth = compPos.width
         compHeight = compPos.height
 
+        // If width/height hasn't been set or is set as 0, don't attempt to wrap the text (obviously)
+        // Instead set the width/height equal to the width/height of the text being rendered
+        if (style.text.isNotEmpty()) {
+            if (compWidth == 0f)
+                style.width = fontRenderer.getWidth(style.text, fontRenderer.getFontFromStyle(style.fontStyle)).px
+            if (compHeight == 0f)
+                style.height = fontRenderer.getHeight(style.text, fontRenderer.getFontFromStyle(style.fontStyle)).px
+        }
+
         // align and update children
         if (children.isNotEmpty())
-            alignChildren(children, alignContent, alignItems, direction, mouseX, mouseY)
+            alignChildren(children, style.alignContent, style.alignItems, style.direction, mouseX, mouseY)
 
         GuiEvent(
             compX,
@@ -208,7 +234,7 @@ sealed class GuiBuilder {
         children.forEach { it.click(mouseX, mouseY, mouseButton) }
     }
     fun scroll(mouseX: Int, mouseY: Int, scroll: Int) {
-        if (isHovering(mouseX, mouseY))
+        if (isHovering(mouseX, mouseY)) {
             GuiEvent(
                 compX,
                 compY,
@@ -217,6 +243,7 @@ sealed class GuiBuilder {
                 mouseX,
                 mouseY
             ).onScroll()
+        }
 
         children.forEach { it.scroll(mouseX, mouseY, scroll) }
     }
@@ -226,33 +253,64 @@ sealed class GuiBuilder {
     }
     internal fun MeasurementUnit.convert(): Float {
         return when (this) {
-            is EmUnit -> this.toPixels(fontSize)
-            is RemUnit -> this.toPixels(rootContainer.fontSize)
-            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
-            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
+            is EmUnit -> this.toPixels(style.fontSize)
+            is RemUnit -> this.toPixels(rootContainer.style.fontSize)
+//            is ViewportWidthUnit -> this.toPixels(getScaledResolution().scaledWidth_double.toFloat())
+//            is ViewportHeightUnit -> this.toPixels(getScaledResolution().scaledHeight_double.toFloat())
             is PixelUnit -> this.pixel
-//            is ViewportHeightUnit -> this.toPixels(Display.getHeight().toFloat())
-//            is ViewportWidthUnit -> this.toPixels(Display.getWidth().toFloat())
+            is ViewportHeightUnit -> this.toPixels(Display.getHeight().toFloat())
+            is ViewportWidthUnit -> this.toPixels(Display.getWidth().toFloat())
         }
     }
 
-    protected fun init(component: GuiComponent): GuiComponent {
-        component.rootContainer = this.rootContainer
+    protected open fun init(component: AbstractComponent): AbstractComponent {
         component.parent = this
-        component.formatting(component)
-        rootContainer.componentList += component
+        component.rootContainer = this.rootContainer
+
+        if (component is ReusableComponent)
+            component.formatting(component)
+
         children += component
+        rootContainer.componentList += component
+
         return component
     }
-    fun component(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init))
-    fun header(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init)).apply { fontStyle = FontStyle.BOLD; fontSize = 24 }
-    fun paragraph(init: GuiComponent.() -> Unit) = this.init(GuiComponent(init))
-    operator fun GuiComponent.unaryPlus(): GuiComponent {
-        val component = GuiComponent(this.formatting)
+    open fun style(formatting: ComponentStyle.() -> Unit) {
+        val style = ComponentStyle(formatting)
+        this.style = style
+    }
+    open fun component(formatting: AbstractComponent.() -> Unit) {
+        this.init(AbstractComponent()).apply(formatting)
+    }
+    open fun header(formatting: AbstractComponent.() -> Unit) {
+        this.init(AbstractComponent()).apply {
+            formatting()
+            style.fontStyle = FontStyle.BOLD
+            style.fontSize = 24
+        }
+    }
+    open fun paragraph(formatting: AbstractComponent.() -> Unit) {
+        this.init(AbstractComponent()).apply(formatting)
+    }
+    operator fun ReusableComponent.unaryPlus(): ReusableComponent {
+        val component = ReusableComponent(this.formatting)
+
+        // reusable components should still not reuse component id's
+        if (component.id.isNotEmpty())
+            component.id = ""
+
         this@GuiBuilder.init(component)
         return component
     }
+    operator fun AbstractComponent.plus(config: AbstractComponent.() -> Unit): AbstractComponent {
+        this.config()
+        return this
+    }
     fun getComponentById(id: String): GuiBuilder? = rootContainer.componentList.find { it.id === id }
+
+    protected fun isRootInitialized(): Boolean {
+        return ::rootContainer.isInitialized
+    }
 }
 
 data class GuiEvent(
@@ -264,14 +322,12 @@ data class GuiEvent(
     val mouseY: Int
 )
 
-fun gui(init: GuiScreen.() -> Unit): GuiScreen {
-    val gui = GuiScreen()
+fun gui(init: GuiComponent.() -> Unit): GuiComponent {
+    val gui = GuiComponent()
     gui.init()
     gui.componentList += gui
     return gui
 }
-fun component(init: GuiComponent.() -> Unit): GuiComponent {
-    val component = GuiComponent(init)
-    component.formatting(component)
-    return component
+fun component(init: ReusableComponent.() -> Unit): ReusableComponent {
+    return ReusableComponent(init)
 }
