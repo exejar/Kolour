@@ -124,27 +124,51 @@ private fun ArrayList<AbstractComponent>.alignContent(
                 }
 
                 Position.ABSOLUTE -> {   // Position relative to nearest positioned ancestor (Instead of positioned relative to the viewport, like fixed positioning)
-                    // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                    computedX = ancestorX + (style.left?.convert() ?: 0f)
-                    computedY = ancestorY + (style.top?.convert() ?: 0f)
+                    val left = style.left?.convert() ?: 0f
+                    val right = style.right?.convert() ?: 0f
+                    val top = style.top?.convert() ?: 0f
+                    val bottom = style.bottom?.convert() ?: 0f
+
+                    if (left > 0)
+                        computedX = ancestorX + left
+                    else if (right > 0)
+                        computedX = ancestorX + ancestorWidth - right - computedWidth
+
+                    if (top > 0)
+                        computedY = ancestorY + top
+                    else if (bottom > 0)
+                        computedX = ancestorY + ancestorHeight - bottom - computedHeight
+
 
                     if (computedWidth == 0f)
-                        computedWidth = ancestorWidth - (style.left?.convert() ?: 0f) - (style.right?.convert() ?: 0f) - style.margin.right.convert()
+                        computedWidth = ancestorWidth - left - right - style.margin.right.convert()
                     if (computedHeight == 0f)
-                        computedHeight = ancestorHeight - (style.top?.convert() ?: 0f) - (style.bottom?.convert() ?: 0f) - style.margin.bottom.convert()
+                        computedHeight = ancestorHeight - top - bottom - style.margin.bottom.convert()
 
                 }
 
                 Position.FIXED -> {      // Position relative to the viewport. Use top, right, bottom, and left properties to position the component
                     val root = child.rootContainer
-                    // TODO not entirely sure if this is how margin is supposed to behave inside FIXED / absolute positioned components
-                    computedX = root.compX + (style.left?.convert() ?: 0f)
-                    computedY = root.compY + (style.top?.convert() ?: 0f)
+
+                    val left = style.left?.convert() ?: 0f
+                    val right = style.right?.convert() ?: 0f
+                    val top = style.top?.convert() ?: 0f
+                    val bottom = style.bottom?.convert() ?: 0f
+
+                    if (left > 0)
+                        computedX = root.compX + left
+                    else if (right > 0)
+                        computedX = root.compX + root.compWidth - right - computedWidth
+
+                    if (top > 0)
+                        computedY = root.compY + top
+                    else if (bottom > 0)
+                        computedX = root.compY + root.compHeight - bottom - computedHeight
 
                     if (computedWidth == 0f)
-                        computedWidth = root.compWidth - (style.left?.convert() ?: 0f) - (style.right?.convert() ?: 0f) - style.margin.right.convert()
+                        computedWidth = root.compWidth - left - right - style.margin.right.convert()
                     if (computedHeight == 0f)
-                        computedHeight = root.compHeight - (style.top?.convert() ?: 0f) - (style.bottom?.convert() ?: 0f) - style.margin.bottom.convert()
+                        computedHeight = root.compHeight - top - bottom - style.margin.bottom.convert()
                 }
             }
 
