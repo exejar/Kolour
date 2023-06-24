@@ -97,6 +97,12 @@ private fun ArrayList<AbstractComponent>.alignContent(
                 )
                 computedX = computedPosition.x
                 computedY = computedPosition.y
+
+                // Apply margin to x and y if position is relative
+                if (style.position == Position.RELATIVE) {
+                    computedX += style.margin.left.convert()
+                    computedY += style.margin.top.convert()
+                }
             }
 
             var alignFlow = alignSpacing
